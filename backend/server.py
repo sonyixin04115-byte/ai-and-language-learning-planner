@@ -1,6 +1,6 @@
-import os, json, sqlite3, hashlib, secrets, time
+import os, json, sqlite3, hashlib, secrets, time, math
 from contextlib import contextmanager
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -45,10 +45,13 @@ def init():
         CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id INTEGER, expires REAL);
         CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY, user_id INTEGER, day TEXT, title TEXT, category TEXT, planned INTEGER, actual INTEGER DEFAULT 0, done INTEGER DEFAULT 0, note TEXT DEFAULT '', archived INTEGER DEFAULT 0, created_source TEXT DEFAULT 'manual');
         CREATE TABLE IF NOT EXISTS courses(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, url TEXT DEFAULT '', description TEXT DEFAULT '', source TEXT DEFAULT 'user', archived INTEGER DEFAULT 0, local_key TEXT);
+        CREATE TABLE IF NOT EXISTS lesson_progress(user_id INTEGER NOT NULL, course_id INTEGER NOT NULL, lesson_id TEXT NOT NULL, completed_at REAL NOT NULL, PRIMARY KEY(user_id,course_id,lesson_id));
         CREATE TABLE IF NOT EXISTS course_defaults(user_id INTEGER PRIMARY KEY);''')
         columns = {row['name'] for row in c.execute('PRAGMA table_info(tasks)')}
         if 'archived' not in columns: c.execute('ALTER TABLE tasks ADD COLUMN archived INTEGER DEFAULT 0')
         if 'created_source' not in columns: c.execute("ALTER TABLE tasks ADD COLUMN created_source TEXT DEFAULT 'manual'")
+        for column in ('started_at','finished_at'):
+            if column not in columns:c.execute('ALTER TABLE tasks ADD COLUMN '+column+' TEXT')
         course_columns={row['name'] for row in c.execute('PRAGMA table_info(courses)')}
         if 'local_key' not in course_columns:c.execute('ALTER TABLE courses ADD COLUMN local_key TEXT')
         for user in c.execute('SELECT id FROM users').fetchall(): seed_supplements(c, user['id'])
@@ -73,6 +76,48 @@ def course_input(data, old=None):
         if parsed.scheme.lower() not in ('http','https') or not parsed.hostname or parsed.username or parsed.password or any(ch.isspace() for ch in url):
             raise ValueError('链接需使用完整的 http 或 https 地址')
     return title, url, description, source
+
+def completed_lessons(c, uid, course, lessons=None):
+    """Count only video IDs still present in this course's current catalog."""
+    if lessons is None: lessons = materials.lesson_list(course)
+    videos = {lesson['id'] for lesson in lessons or [] if lesson['kind']=='video'}
+    return videos.intersection(row['lesson_id'] for row in c.execute(
+        'SELECT lesson_id FROM lesson_progress WHERE user_id=? AND course_id=?',
+        (uid,course['id'])))
+
+def now_utc():
+    return datetime.now(timezone.utc)
+
+def task_time(value, label):
+    if value is None or value=='':return None
+    if not isinstance(value,str) or len(value)>128:raise ValueError(label+'格式无效')
+    try:
+        moment=datetime.fromisoformat(value)
+        if moment.tzinfo is None or moment.utcoffset() is None:raise ValueError()
+        return moment.astimezone(timezone.utc)
+    except (ValueError,OverflowError):raise ValueError(label+'需使用带时区的 ISO 时间')
+
+def task_timing(data, old=None, done=False):
+    """A completed interval determines minutes; an open timer has no final total."""
+    old=dict(old) if old is not None else {}
+    start=task_time(data.get('started_at',old.get('started_at')),'开始时间')
+    finish=task_time(data.get('finished_at',old.get('finished_at')),'结束时间')
+    if 'action' in data:
+        if data['action']!='start' or set(data)!={'action'}:raise ValueError('开始计时请单独提交 action:start')
+        if old.get('done'):raise ValueError('已完成任务请先取消完成，再开始计时')
+        if start is None:start=now_utc()
+    if finish is not None and start is None:raise ValueError('请先填写开始时间')
+    if done and start is not None and finish is None:finish=now_utc()
+    if finish is not None:
+        seconds=(finish-start).total_seconds()
+        if seconds<0:raise ValueError('结束时间不能早于开始时间')
+        if seconds>86400:raise ValueError('单次计时最多 24 小时，请分开记录')
+        actual=math.ceil(seconds/60)
+    elif start is not None:actual=0
+    else:actual=int(data.get('actual',old.get('actual',0)))
+    if not 0<=actual<=1440:raise ValueError('用时应为 0–1440 分钟')
+    serialize=lambda value:value.isoformat().replace('+00:00','Z') if value is not None else None
+    return serialize(start),serialize(finish),actual
 
 def archive_template(c, user):
     """Archive untouched old template rows; keep all work and manual differences."""
@@ -158,8 +203,8 @@ class Handler(BaseHTTPRequestHandler):
                 if path == '/api/state' and self.command == 'GET':
                     courses=[]
                     for row in c.execute('SELECT id,title,url,description,source,local_key FROM courses WHERE user_id=? AND archived=0 ORDER BY CASE source WHEN \'user\' THEN 0 ELSE 1 END,id',(uid,)):
-                        course=dict(row);course['source_label']='我的课程' if course['source']=='user' else '补充推荐';course.update(materials.metadata(course));courses.append(course)
-                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start')}, 'tasks':[dict(t) for t in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,))], 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                        course=dict(row);course['source_label']='我的课程' if course['source']=='user' else '补充推荐';course.update(materials.metadata(course));course['completed_count']=len(completed_lessons(c,uid,course));courses.append(course)
+                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start')}, 'tasks':[dict(t) for t in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source,started_at,finished_at FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,))], 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
                 if path == '/api/settings' and self.command == 'PATCH':
                     minutes = int(data['minutes'])
                     if not 30 <= minutes <= 600: raise ValueError('每日时间应为 30–600 分钟')
@@ -184,7 +229,24 @@ class Handler(BaseHTTPRequestHandler):
                     if not row:return self.reply(404,{'error':'课程不存在'})
                     course=dict(row);lessons=materials.lesson_list(course)
                     if lessons is None:return self.reply(404,{'error':'这门课程没有本地资料目录'})
-                    course.update(materials.metadata(course));return self.reply(200,{'course':course,'lessons':lessons})
+                    completed=completed_lessons(c,uid,course,lessons)
+                    for lesson in lessons:lesson['done']=lesson['kind']=='video' and lesson['id'] in completed
+                    course.update(materials.metadata(course));course['completed_count']=len(completed)
+                    return self.reply(200,{'course':course,'lessons':lessons})
+                parts=path.split('/')
+                if len(parts)==6 and parts[1:3]==['api','courses'] and parts[4]=='lessons':
+                    cid=int(parts[3]);lid=parts[5]
+                    row=c.execute('SELECT id,title,local_key FROM courses WHERE id=? AND user_id=? AND archived=0',(cid,uid)).fetchone()
+                    if not row:return self.reply(404,{'error':'课程不存在'})
+                    course=dict(row);lessons=materials.lesson_list(course)
+                    lesson=next((item for item in lessons or [] if item['id']==lid and item['kind']=='video'),None)
+                    if not lesson:return self.reply(404,{'error':'视频课时不存在'})
+                    if self.command!='PATCH':return self.reply(405,{'error':'不支持的操作'})
+                    if not isinstance(data,dict) or type(data.get('done')) is not bool:raise ValueError('完成状态应为 true 或 false')
+                    if data['done']:
+                        c.execute('INSERT INTO lesson_progress(user_id,course_id,lesson_id,completed_at) VALUES(?,?,?,?) ON CONFLICT(user_id,course_id,lesson_id) DO NOTHING',(uid,cid,lid,time.time()))
+                    else:c.execute('DELETE FROM lesson_progress WHERE user_id=? AND course_id=? AND lesson_id=?',(uid,cid,lid))
+                    return self.reply(200,{'ok':True,'done':data['done'],'completed_count':len(completed_lessons(c,uid,course,lessons))})
                 if path.startswith('/api/courses/'):
                     cid=int(path.rsplit('/',1)[1])
                     old=c.execute('SELECT * FROM courses WHERE id=? AND user_id=? AND archived=0',(cid,uid)).fetchone()
@@ -200,10 +262,11 @@ class Handler(BaseHTTPRequestHandler):
                     planned = int(data['planned'])
                     if not title or len(title)>200 or not 1<=planned<=600: raise ValueError('请填写任务和 1–600 分钟预计用时')
                     category = str(data.get('category','其他')).strip()[:30] or '其他'
-                    note = str(data.get('note','')); actual = int(data.get('actual',0)); done = data.get('done',False)
-                    if len(note)>10000 or not 0<=actual<=1440: raise ValueError('用时应为 0–1440 分钟，笔记最多 10000 字')
+                    note = str(data.get('note','')); done = data.get('done',False)
+                    if len(note)>10000: raise ValueError('笔记最多 10000 字')
                     if not isinstance(done,(bool,int)) or done not in (False,True,0,1): raise ValueError('完成状态应为 true 或 false')
-                    c.execute('INSERT INTO tasks(user_id,day,title,category,planned,note,actual,done) VALUES(?,?,?,?,?,?,?,?)',(uid,day,title,category,planned,note,actual,int(done)))
+                    started_at,finished_at,actual=task_timing(data,done=bool(done))
+                    c.execute('INSERT INTO tasks(user_id,day,title,category,planned,note,actual,done,started_at,finished_at) VALUES(?,?,?,?,?,?,?,?,?,?)',(uid,day,title,category,planned,note,actual,int(done),started_at,finished_at))
                     return self.reply(201, {'ok':True})
                 if path.startswith('/api/tasks/'):
                     tid = int(path.rsplit('/',1)[1])
@@ -211,14 +274,17 @@ class Handler(BaseHTTPRequestHandler):
                     if self.command == 'DELETE': c.execute('DELETE FROM tasks WHERE id=? AND user_id=?',(tid,uid))
                     elif self.command == 'PATCH':
                         old = c.execute('SELECT * FROM tasks WHERE id=? AND user_id=?',(tid,uid)).fetchone()
-                        actual = int(data.get('actual',old['actual'])); note = str(data.get('note',old['note']))
-                        if not 0<=actual<=1440 or len(note)>10000: raise ValueError('用时应为 0–1440 分钟，笔记最多 10000 字')
+                        note = str(data.get('note',old['note']))
+                        if len(note)>10000: raise ValueError('笔记最多 10000 字')
+                        done=data.get('done',bool(old['done']))
+                        if not isinstance(done,(bool,int)) or done not in (False,True,0,1):raise ValueError('完成状态应为 true 或 false')
+                        started_at,finished_at,actual=task_timing(data,old,bool(done))
                         title = str(data.get('title',old['title'])).strip()
                         day = date.fromisoformat(data.get('day',old['day'])).isoformat()
                         planned = int(data.get('planned',old['planned']))
                         category = str(data.get('category',old['category'])).strip()[:30] or '其他'
                         if not title or len(title)>200 or not 1<=planned<=600: raise ValueError('请填写任务和 1–600 分钟预计用时')
-                        c.execute('UPDATE tasks SET done=?,actual=?,note=?,title=?,day=?,planned=?,category=? WHERE id=? AND user_id=?',(int(bool(data.get('done',old['done']))),actual,note,title,day,planned,category,tid,uid))
+                        c.execute('UPDATE tasks SET done=?,actual=?,note=?,title=?,day=?,planned=?,category=?,started_at=?,finished_at=? WHERE id=? AND user_id=?',(int(bool(done)),actual,note,title,day,planned,category,started_at,finished_at,tid,uid))
                     else: return self.reply(405, {'error':'不支持的操作'})
                     return self.reply(200, {'ok':True})
                 return self.reply(404, {'error':'接口不存在'})
