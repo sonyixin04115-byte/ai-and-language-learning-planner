@@ -1,0 +1,38 @@
+# Accounts and personal records
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+backups/
+data/
+backend/materials_catalog.json
+backend/materials_catalog.json.tmp
+
+# Private migration bundles and course media
+deploy/ready/
+*.zip
+*.rar
+*.7z
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.webm
+*.wmv
+
+# Credentials and local state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+.idea/
+.venv/
+__pycache__/
+*.py[cod]
+work/
+private/
+.secrets/
+password-reset*.json
+**/password-reset*.json
