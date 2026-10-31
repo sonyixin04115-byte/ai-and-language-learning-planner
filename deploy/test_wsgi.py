@@ -24,10 +24,10 @@ class WSGITests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def request(self,path,method="GET",data=None,cookie=None,origin=ORIGIN,host=None,length=None,app=None):
+    def request(self,path,method="GET",data=None,cookie=None,origin=ORIGIN,host=None,length=None,app=None,content_type="application/json"):
         raw=json.dumps(data).encode() if data is not None else b""
         environ={};setup_testing_defaults(environ)
-        environ.update(PATH_INFO=path,QUERY_STRING='',REQUEST_METHOD=method,HTTP_HOST=host or ORIGIN.removeprefix('https://'),CONTENT_LENGTH=str(len(raw) if length is None else length),CONTENT_TYPE="application/json",REMOTE_ADDR="127.0.0.1",**{"wsgi.input":io.BytesIO(raw),"wsgi.url_scheme":"https"})
+        environ.update(PATH_INFO=path,QUERY_STRING='',REQUEST_METHOD=method,HTTP_HOST=host or ORIGIN.removeprefix('https://'),CONTENT_LENGTH=str(len(raw) if length is None else length),CONTENT_TYPE=content_type,REMOTE_ADDR="127.0.0.1",**{"wsgi.input":io.BytesIO(raw),"wsgi.url_scheme":"https"})
         if origin:environ['HTTP_ORIGIN']=origin
         if cookie:environ['HTTP_COOKIE']=cookie
         status=[];headers=[]
@@ -76,6 +76,20 @@ class WSGITests(unittest.TestCase):
             _,headers=self.signup()
         parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
         self.assertTrue(parsed['session']['secure'])
+
+    def test_pythonanywhere_blank_content_length_after_login(self):
+        # PythonAnywhere's uWSGI environment uses blank metadata for GETs.
+        self.assertEqual(self.request('/api/health',length='',content_type='')[0],200)
+        self.assertEqual(self.request('/api/state',length='',content_type='')[0],401)
+        self.signup()
+        status,headers,_=self.request('/api/login','POST',{'username':'test-student','password':'TestingOnly123'})
+        self.assertEqual(status,200)
+        parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
+        cookie='session='+parsed['session'].value
+        status,_,body=self.request('/api/state',cookie=cookie,length='',content_type='')
+        self.assertEqual(status,200)
+        self.assertEqual(json.loads(body)['user']['username'],'test-student')
+        self.assertEqual(json.loads(body)['runtime'],'cloud')
 
     def test_head_success_and_errors_have_no_body(self):
         for path,expected in [('/',200),('/api/health',200),('/data/study.db',404),('/api/state',401),('/api/materials/missing',409)]:

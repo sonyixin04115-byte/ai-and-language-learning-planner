@@ -89,11 +89,15 @@ def create_app(db_path=None, origin=None, allow_registration=False):
             self.path = environ.get("PATH_INFO", "/")
             self.headers = Message()
             for key, value in environ.items():
-                if key.startswith("HTTP_"):
+                if key.startswith("HTTP_") and key not in {"HTTP_CONTENT_LENGTH", "HTTP_CONTENT_TYPE"}:
                     self.headers[key[5:].replace("_", "-")] = str(value)
-            for name in ("CONTENT_LENGTH", "CONTENT_TYPE"):
-                if name in environ:
-                    self.headers[name.replace("_", "-")] = str(environ[name])
+            # WSGI servers may supply CONTENT_LENGTH='' for bodyless requests.
+            # The boundary has already validated and read the body; expose its
+            # actual numeric length to the shared HTTP handler, never the raw
+            # WSGI string or a duplicate client Content-Length header.
+            self.headers["Content-Length"] = str(len(body))
+            if environ.get("CONTENT_TYPE"):
+                self.headers["Content-Type"] = str(environ["CONTENT_TYPE"])
             # The cloud boundary already checked the real Origin; normalize it
             # for the local transport's fixed CORS check without weakening it.
             if self.headers.get("Origin"):
