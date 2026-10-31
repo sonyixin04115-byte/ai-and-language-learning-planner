@@ -9,7 +9,7 @@
 .planner-table tbody th{font-weight:500;color:#264336}
 .planner-table tbody tr:nth-child(even)>*{background:#fafcf8}
 .planner-table tbody tr:hover>*{background:#f0f6ec}
-.task-table{min-width:930px}.task-table .completion-cell{width:54px;text-align:center;position:sticky;left:0;z-index:1;background:#fff}
+.task-table{min-width:1280px}.task-table .completion-cell{width:54px;text-align:center;position:sticky;left:0;z-index:1;background:#fff}
 .task-table input[type=checkbox]{width:20px;height:20px;margin:0;vertical-align:middle;accent-color:#22664f;cursor:pointer}
 .task-table .task-name{min-width:220px;max-width:390px;overflow:hidden;text-overflow:ellipsis}
 .planner-table .date-cell{font-variant-numeric:tabular-nums;font-size:12px}.planner-table .number-cell{text-align:right;font-variant-numeric:tabular-nums}
@@ -17,6 +17,9 @@
 .table-actions .link{padding:5px 7px}.table-status{font-size:12px;color:#7b887e}.table-status.finished{color:#22664f}
 .planner-table tr.is-done>*{background:#f0f5ed;color:#7c8d7b}.planner-table tr.is-done .task-name{text-decoration:line-through}
 .planner-table .table-empty{text-align:center;height:108px;white-space:normal;color:#82907f;font-size:13px}
-.journal-table{min-width:940px}.journal-table .task-name{min-width:200px;max-width:320px;overflow:hidden;text-overflow:ellipsis}.note-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.journal-table{min-width:1240px}.journal-table .task-name{min-width:200px;max-width:320px;overflow:hidden;text-overflow:ellipsis}.note-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis}
 .hero h1{font-size:27px;letter-spacing:0}.hero{margin-bottom:20px}.stats{display:flex;border:1px solid #dce4d6;border-radius:7px;gap:0;background:white;margin-bottom:22px}.stats .stat{flex:1;border:0;border-radius:0;background:transparent;padding:15px 20px}.stats .stat+.stat{border-left:1px solid #e1e7df}.stat strong{font-size:24px;margin:3px 0}.stat strong small{font-size:12px}.stat>span:last-child{display:none}.card{border-radius:8px}.progress{height:4px}.section-title{margin-bottom:16px}.add-form{padding-top:4px}.info-strip{font-size:11px}
 @media(max-width:700px){.hero h1{font-size:23px}.stats{flex-wrap:wrap}.stats .stat{flex:0 0 50%;padding:12px 15px}.stats .stat:nth-child(3){border-left:0;border-top:1px solid #e1e7df}.stats .stat:nth-child(4){border-top:1px solid #e1e7df}.stat strong{font-size:21px}.card{padding:16px}.planner-table th,.planner-table td{padding:10px 12px}.table-scroll{border-radius:4px}}
+
+/* Start and end times stay in table columns on computer and tablet. */
+.planner-table .time-cell{min-width:112px;font-size:12px;font-variant-numeric:tabular-nums}.time-cell time{display:flex;flex-direction:column;gap:2px}.time-cell time span{font-size:11px;color:var(--muted)}.time-cell time strong{font-size:12px;font-weight:500}.table-status.running,.timing-active{color:#b07524}.task-table .table-actions button:disabled{opacity:.6;cursor:wait}.task-timing{border:1px solid #d9e1d7;border-radius:6px;padding:12px 14px;margin:14px 0}.task-timing legend{padding:0 5px;font-size:13px;color:#4d6c50}.task-time-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.task-time-inputs label{min-width:0;margin:0}.task-time-inputs input{min-width:0;width:100%;font-size:13px}.task-timing p{font-size:12px;line-height:1.6;margin:10px 0 0}#taskForm input[readonly]{background:#f2f5ef;color:#54715d;cursor:default}@media(max-width:560px){.task-time-inputs{grid-template-columns:1fr}}
