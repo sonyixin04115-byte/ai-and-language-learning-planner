@@ -13,3 +13,51 @@
 .course-stop{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;max-height:3.4em;font-size:11px;font-weight:400;color:#577466;line-height:1.7;margin-top:7px;overflow-wrap:anywhere}.course-scope-panel{padding:14px 16px;margin:0 0 22px;background:#edf5e9;border:1px solid #d2e2c9;border-left:3px solid #4f8256;border-radius:7px}.course-scope-panel dl{margin:0}.course-scope-panel dl>div{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;margin:0 0 10px}.course-scope-panel dl>div:last-child{margin-bottom:0}.course-scope-panel dt{font-size:12px;font-weight:650;color:#376346}.course-scope-panel dd{margin:0;font-size:13px;line-height:1.75;overflow-wrap:anywhere;white-space:pre-wrap}@media(max-width:560px){.course-scope-panel{padding:12px}.course-scope-panel dl>div{grid-template-columns:64px minmax(0,1fr);gap:6px}}
 .course-priority{font-weight:700;margin-right:5px}.course-roadmap .course-priority-key{margin:7px 0;color:#47644f}.course-priority-key strong{color:#22664f}
 .course-roadmap{margin:-6px 0 24px;padding:17px 20px;background:#edf4e9;border:1px solid #dbe6d5;border-radius:10px}.course-roadmap h2{font-size:15px;margin:0 0 7px}.course-roadmap p{font-size:12px;color:#6b7e6e;margin:0;line-height:1.8}.course-roadmap .course-roadmap-path{color:#315e49;font-size:13px;margin-bottom:5px;overflow-wrap:anywhere}.course-advice{display:block;width:fit-content;max-width:100%;margin-top:7px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:400;background:#f0f2ed;color:#6b7b6b;line-height:1.7}.course-advice.required{background:#e5f0e3;color:#276447}.course-advice.foundation{background:#eaf0f7;color:#496585}.course-advice.optional{background:#f6f0e5;color:#8a6a34}.course-guide-dialog{width:min(680px,calc(100% - 28px));max-width:680px;padding:28px;max-height:88vh;overflow:auto}.course-guide-heading h2{margin:5px 0 0;overflow-wrap:anywhere}.course-guide-heading{margin-bottom:20px}.course-guide-description{font-size:14px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}.course-guide-hint{font-size:12px;margin:22px 0 0;padding-top:15px;border-top:1px solid var(--line)}.course-guide-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px}.course-guide-actions .button{font-size:13px}@media(max-width:560px){.course-roadmap{padding:14px}.course-guide-dialog{padding:20px}.course-guide-heading h2{font-size:20px}.course-guide-description{font-size:13px}}
+
+/* Language course groups and persistent daily translation practice. */
+.language-hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:100%}
+.language-practice{margin-top:32px;min-width:0;max-width:100%;scroll-margin-top:24px}
+.language-section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.language-section-heading>div{flex:1 1 320px;min-width:0}
+.language-section-heading h2{font-size:22px;margin:8px 0 10px;overflow-wrap:anywhere}
+.language-section-heading p{font-size:13px;line-height:1.8;margin:0;max-width:760px;overflow-wrap:anywhere}
+.language-section-heading>button{flex-shrink:0;max-width:100%;white-space:normal}
+.language-practice-controls{display:grid;grid-template-columns:minmax(170px,1.15fr) minmax(150px,.8fr) minmax(170px,1fr);gap:14px;min-width:0}
+.language-practice-controls label{min-width:0;margin:0;font-size:12px;line-height:1.7;color:#53685a}
+.language-practice-controls select,.language-practice-controls input{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;margin-top:6px;background:#fff}
+.language-practice-switch{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}
+.language-practice-switch .selected{background:#e6f0e2;border-color:#b9ceb3;color:#2e6246;font-weight:650}
+.language-practice-summary{font-size:13px;font-weight:650;color:#315e49;line-height:1.7;margin:20px 0 8px;overflow-wrap:anywhere}
+.language-practice-notice,.language-source-notice{font-size:12px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 16px;color:#66796d}
+.language-source-notice{padding:12px 14px;border-left:3px solid #91ab89;background:#f0f5ec;border-radius:0 6px 6px 0}
+.language-load-error{font-size:13px;padding:14px;background:#fcf0e9;color:#925334;line-height:1.8;overflow-wrap:anywhere}
+.language-loading,.language-empty{font-size:14px;line-height:1.9;margin:18px 0 4px;padding:22px 16px;background:#f7f8f3;border-radius:7px;color:#69766c;overflow-wrap:anywhere}
+.language-practice-table{width:1340px;min-width:1340px;table-layout:fixed}
+.language-practice-table col.practice-col-number{width:55px}.language-practice-table col.practice-col-grammar{width:210px}.language-practice-table col.practice-col-prompt{width:275px}.language-practice-table col.practice-col-answer{width:320px}.language-practice-table col.practice-col-reference{width:280px}.language-practice-table col.practice-col-actions{width:200px}
+.language-practice-table td,.language-practice-table th{box-sizing:border-box;vertical-align:top;white-space:normal;overflow-wrap:anywhere;word-break:normal;padding:17px 14px;line-height:1.8;min-width:0}
+.language-practice-table thead th{font-size:12px;color:#68786c;white-space:normal}
+.language-practice-table tbody th{font-weight:400}
+.language-practice-table tbody th>strong{display:block;font-size:14px;color:#294c3a;line-height:1.9;overflow-wrap:anywhere}
+.language-practice-table tbody td>p{font-size:13px;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.practice-reference{display:block;font-size:11px;color:#7a877e;margin-top:9px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+.practice-source{margin:13px 0;padding:12px 13px;border-left:3px solid #91ad86;background:#f0f5ec;border-radius:0 5px 5px 0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-size:14px;color:#254a37}
+.language-practice-table textarea{box-sizing:border-box;display:block;width:100%;min-width:0;max-width:100%;min-height:142px;max-height:430px;resize:vertical;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:14px;line-height:1.9;margin:0}
+.practice-save-state{display:block;line-height:1.8;font-size:11px;color:#768275;margin-top:8px;overflow-wrap:anywhere}
+.practice-model,.practice-grammar{min-width:0;max-width:100%;font-size:12px;line-height:1.9;margin-top:10px;overflow-wrap:anywhere}
+.practice-model{margin-top:0}.practice-model summary,.practice-grammar summary{cursor:pointer;color:#386a4b;font-weight:600;white-space:normal;overflow-wrap:anywhere;border-radius:3px}
+.practice-model summary:focus-visible,.practice-grammar summary:focus-visible{outline:2px solid #739c80;outline-offset:4px}
+.practice-model p,.practice-grammar p{margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.practice-model-answer{font-size:14px;line-height:1.9;color:#2d5a43}
+.practice-model ul{margin:12px 0;padding-left:19px;font-size:12px;line-height:1.9}
+.practice-model li{overflow-wrap:anywhere;margin:4px 0}
+.practice-row-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0}
+.practice-row-actions button{width:100%;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.practice-row-actions .practice-check{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.8;margin:0;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.practice-check input[type=checkbox]{appearance:auto;width:17px;height:17px;min-width:17px;padding:0;margin:3px 0 0;accent-color:#2c6e52;flex-shrink:0}
+.practice-finished{background:#f5f8f0}.practice-finished .practice-save-state{color:#4f7b4a}
+.practice-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@media(max-width:700px){.language-practice-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.language-practice-controls>label:first-child{grid-column:1/-1}.language-section-heading h2{font-size:20px}.language-practice-switch button{font-size:12px;padding:9px 10px}}
+@media(max-width:420px){.language-practice-controls{grid-template-columns:minmax(0,1fr)}.language-practice-controls>label{grid-column:1}.language-hero-actions{gap:7px}.language-hero-actions .button,.language-hero-actions button{font-size:12px;white-space:normal}.language-practice-switch{gap:7px}}
+
+.language-practice button:disabled{cursor:default}
+@media(min-width:901px){aside nav{max-height:calc(100vh - 290px);overflow-y:auto}}
