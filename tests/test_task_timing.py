@@ -1,5 +1,7 @@
 """Persistent task clocks, with isolated data and deterministic server time."""
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 import importlib.util
 import json
 from pathlib import Path
@@ -136,6 +138,91 @@ class TaskTimingTests(unittest.TestCase):
         self.assertEqual(code,200)
         row=next(t for t in state['tasks'] if t['id']==tid)
         self.assertEqual((row['started_at'],row['finished_at'],row['actual']),('2026-11-01T02:00:00Z','2026-11-01T02:45:00Z',45))
+
+    def test_archive_only_untouched_templates_preserves_manual_and_timed_tasks(self):
+        title=app.WEEKS[0][1][0]
+        manual=self.create(title=title,category='学习',planned=72)
+        running=self.create(title=title,category='学习',planned=72)
+        self.assertEqual(self.req(f'/tasks/{running}','PATCH',{'action':'start'})[0],200)
+        template_ids={}
+        with app.conn() as c:
+            for label,changes in [
+                ('untouched',{}),
+                ('started',{'started_at':'2026-11-01T02:00:00Z'}),
+                ('finished',{'started_at':'2026-11-01T02:00:00Z','finished_at':'2026-11-01T02:00:00Z'}),
+                ('noted',{'note':'自己的笔记'}),
+                ('minutes',{'actual':12}),
+                ('done',{'done':1}),
+            ]:
+                cur=c.execute("INSERT INTO tasks(user_id,day,title,category,planned,created_source) VALUES(1,'2026-11-01',?,'学习',72,'template')",(title,))
+                template_ids[label]=cur.lastrowid
+                for key,value in changes.items():c.execute('UPDATE tasks SET '+key+'=? WHERE id=?',(value,cur.lastrowid))
+        code,result=self.req('/tasks/archive-template','POST',{})
+        self.assertEqual((code,result['archived']),(200,1))
+        visible={task['id'] for task in self.req('/state')[1]['tasks']}
+        self.assertIn(manual,visible);self.assertIn(running,visible)
+        self.assertNotIn(template_ids['untouched'],visible)
+        self.assertTrue(all(tid in visible for label,tid in template_ids.items() if label!='untouched'))
+
+    def overlapping_updates(self,tid,payload,first_time,second_time,second_path=None,second_method='PATCH',second_payload=None):
+        """Overlap two API calls before the first write, without real data."""
+        first_read=threading.Event();second_ready=threading.Event()
+        release_first=threading.Event();first_reply=threading.Event()
+        calls=[];guard=threading.Lock();first_thread=[None]
+        original_timing=app.task_timing;original_conn=app.conn
+        @contextmanager
+        def traced_conn():
+            with original_conn() as connection:
+                def trace(statement):
+                    # The second writer may be blocked on the write lock before
+                    # it can read. Its attempted BEGIN confirms real overlap.
+                    if statement=='BEGIN IMMEDIATE' and first_thread[0] is not None and threading.get_ident()!=first_thread[0]:second_ready.set()
+                connection.set_trace_callback(trace)
+                yield connection
+        def timing(data,old=None,done=False):
+            with guard:index=len(calls);calls.append(None)
+            if index==0:
+                first_thread[0]=threading.get_ident();first_read.set()
+                if not release_first.wait(5):raise RuntimeError('test first-write gate timed out')
+            else:
+                second_ready.set()
+                if not first_reply.wait(5):raise RuntimeError('test commit gate timed out')
+            with self.at(first_time if index==0 else second_time):result=original_timing(data,old,done)
+            calls[index]=result
+            return result
+        def first_request():
+            try:return self.req(f'/tasks/{tid}','PATCH',payload)
+            finally:first_reply.set()
+        with patch.object(app,'conn',side_effect=traced_conn),patch.object(app,'task_timing',side_effect=timing):
+            with ThreadPoolExecutor(max_workers=2) as workers:
+                first=workers.submit(first_request)
+                try:
+                    self.assertTrue(first_read.wait(5))
+                    second=workers.submit(self.req,second_path or f'/tasks/{tid}',second_method,payload if second_payload is None else second_payload)
+                    self.assertTrue(second_ready.wait(5))
+                finally:release_first.set()
+                self.assertEqual(first.result(timeout=10)[0],200)
+                self.assertEqual(second.result(timeout=10)[0],200)
+        return calls
+
+    def test_overlapping_device_starts_and_completions_keep_first_times(self):
+        tid=self.create()
+        starts=self.overlapping_updates(tid,{'action':'start'},'2026-11-02T00:00:00Z','2026-11-02T00:05:00Z')
+        self.assertEqual([row[0] for row in starts],['2026-11-02T00:00:00Z']*2)
+        self.assertEqual(self.task(tid)['started_at'],'2026-11-02T00:00:00Z')
+        finishes=self.overlapping_updates(tid,{'done':True},'2026-11-02T00:01:00Z','2026-11-02T00:05:00Z')
+        self.assertEqual([row[1] for row in finishes],['2026-11-02T00:01:00Z']*2)
+        row=self.task(tid)
+        self.assertEqual((row['finished_at'],row['actual']),('2026-11-02T00:01:00Z',1))
+
+    def test_overlapping_archive_cannot_hide_newly_started_template(self):
+        tid=self.create(title=app.WEEKS[0][1][0],category='学习',planned=72)
+        with app.conn() as c:c.execute("UPDATE tasks SET created_source='template' WHERE id=?",(tid,))
+        self.overlapping_updates(tid,{'action':'start'},'2026-11-02T00:00:00Z','2026-11-02T00:05:00Z',
+            second_path='/tasks/archive-template',second_method='POST',second_payload={})
+        state=self.req('/state')[1]
+        self.assertEqual(state['archived_task_count'],0)
+        self.assertEqual(self.task(tid)['started_at'],'2026-11-02T00:00:00Z')
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
