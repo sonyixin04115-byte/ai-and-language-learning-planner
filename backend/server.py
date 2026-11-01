@@ -121,12 +121,13 @@ def task_timing(data, old=None, done=False):
 
 def archive_template(c, user):
     """Archive untouched old template rows; keep all work and manual differences."""
+    if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
     uid = user['id']; start = date.fromisoformat(user['start']); ids = []
     for w, (_, topics) in enumerate(WEEKS):
         for d, topic in enumerate(topics):
             day = (start + timedelta(days=w*7+d)).isoformat()
             for title, category, portion in [(topic,'学习',.4),('动手练习：'+topic,'练习',.4),('回顾今日知识，写下疑问与总结','复习',.2)]:
-                row = c.execute("SELECT id FROM tasks WHERE user_id=? AND day=? AND title=? AND category=? AND planned=? AND done=0 AND actual=0 AND note='' AND archived=0 ORDER BY id LIMIT 1",
+                row = c.execute("SELECT id FROM tasks WHERE user_id=? AND day=? AND title=? AND category=? AND planned=? AND created_source IN ('template','legacy_template') AND done=0 AND actual=0 AND note='' AND started_at IS NULL AND finished_at IS NULL AND archived=0 ORDER BY id LIMIT 1",
                     (uid, day, title, category, round(user['minutes']*portion))).fetchone()
                 if row: ids.append(row['id'])
     c.executemany("UPDATE tasks SET archived=1,created_source='legacy_template' WHERE id=? AND user_id=?",[(tid,uid) for tid in ids])
@@ -270,6 +271,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply(201, {'ok':True})
                 if path.startswith('/api/tasks/'):
                     tid = int(path.rsplit('/',1)[1])
+                    # Serialize task read/modify/write operations. A second
+                    # device must observe the first committed start/end time,
+                    # rather than overwrite it from an earlier snapshot.
+                    if self.command in ('PATCH','DELETE'):c.execute('BEGIN IMMEDIATE')
                     if not c.execute('SELECT id FROM tasks WHERE id=? AND user_id=? AND archived=0',(tid,uid)).fetchone(): return self.reply(404, {'error':'任务不存在'})
                     if self.command == 'DELETE': c.execute('DELETE FROM tasks WHERE id=? AND user_id=?',(tid,uid))
                     elif self.command == 'PATCH':
@@ -286,6 +291,7 @@ class Handler(BaseHTTPRequestHandler):
                         if not title or len(title)>200 or not 1<=planned<=600: raise ValueError('请填写任务和 1–600 分钟预计用时')
                         c.execute('UPDATE tasks SET done=?,actual=?,note=?,title=?,day=?,planned=?,category=?,started_at=?,finished_at=? WHERE id=? AND user_id=?',(int(bool(done)),actual,note,title,day,planned,category,started_at,finished_at,tid,uid))
                     else: return self.reply(405, {'error':'不支持的操作'})
+                    c.commit()
                     return self.reply(200, {'ok':True})
                 return self.reply(404, {'error':'接口不存在'})
         except (ValueError, KeyError, TypeError) as e: self.reply(400, {'error':str(e) or '输入有误'})
