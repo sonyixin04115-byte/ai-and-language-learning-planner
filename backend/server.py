@@ -200,6 +200,12 @@ def task_timing(data, old=None, done=False):
         if data['action']!='start' or set(data)!={'action'}:raise ValueError('开始计时请单独提交 action:start')
         if old.get('done'):raise ValueError('已完成任务请先取消完成，再开始计时')
         if start is None:start=now_utc()
+    # Old completed records may have only a start and manually recorded minutes.
+    # Editing their text must not invent an end time or erase their saved effort.
+    if done and old.get('done') and start is not None and finish is None and not {'started_at','finished_at'}.intersection(data):
+        actual=int(old.get('actual',0))
+        if not 0<=actual<=1440:raise ValueError('用时应为 0–1440 分钟')
+        return old['started_at'],None,actual
     if finish is not None and start is None:raise ValueError('请先填写开始时间')
     if done and start is not None and finish is None:finish=now_utc()
     if finish is not None:
