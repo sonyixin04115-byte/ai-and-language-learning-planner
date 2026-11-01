@@ -27,4 +27,6 @@
   vertical-align: .05em;
 }
 .task-timer.finished strong { color: inherit; }
+.task-timer.paused strong,.task-timer.paused small{color:#93672e}
+.task-timer.paused small::before{content:'Ⅱ';display:inline-block;margin-right:.3rem;font-size:.7rem;font-weight:700}
 .task-timer.unavailable { color: var(--muted, #718078); }
