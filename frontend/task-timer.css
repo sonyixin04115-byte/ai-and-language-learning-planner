@@ -1,0 +1,30 @@
+.task-timer {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .16rem;
+  min-width: 6.2em;
+  white-space: nowrap;
+  line-height: 1.35;
+}
+.task-timer strong {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: .035em;
+  font-size: .98rem;
+  font-weight: 650;
+}
+.task-timer small { color: var(--muted, #718078); font-size: .72rem; }
+.task-timer.running strong { color: var(--green, #24634e); }
+.task-timer.running small::before {
+  content: "";
+  display: inline-block;
+  width: .4rem;
+  height: .4rem;
+  margin-right: .35rem;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: .05em;
+}
+.task-timer.finished strong { color: inherit; }
+.task-timer.unavailable { color: var(--muted, #718078); }

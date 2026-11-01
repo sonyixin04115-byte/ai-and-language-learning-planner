@@ -1,0 +1,17 @@
+/* Account avatars are isolated from task and course layouts. */
+.profile-header-account{display:flex;align-items:center;gap:8px;flex:none}
+.profile-header-account .profile{display:inline-block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-avatar,.profile-avatar-preview{display:inline-flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;background:#e6eee1;color:#22664f;font-weight:650;flex:none}
+.profile-avatar{width:32px;height:32px;font-size:15px;border:1px solid #d3dfcd}
+.profile-avatar img,.profile-avatar-preview img{display:block;width:100%;height:100%;object-fit:cover}
+.profile-avatar-card{min-width:0}
+.profile-avatar-preview-row{display:flex;align-items:center;gap:16px;margin:6px 0 18px}
+.profile-avatar-preview{width:88px;height:88px;font-size:34px;border:2px solid #d5e2cf}
+.profile-avatar-caption{font-size:13px;line-height:1.7;margin:0 0 6px;color:#4f6857}
+.profile-avatar-preview-row small{display:block;font-size:11px;line-height:1.8}
+.profile-avatar-picker{font-size:13px;margin:12px 0}
+.profile-avatar-picker input{display:block;max-width:100%;font-size:12px;margin-top:7px;padding:8px;background:#fafcf8}
+.profile-avatar-status{font-size:12px;line-height:1.7;min-height:1.7em;color:#637d66;margin:10px 0 14px}
+.profile-avatar-actions{display:flex;gap:8px;flex-wrap:wrap}
+.profile-avatar-actions button{padding:8px 12px;font-size:12px}
+@media(max-width:560px){.profile-header-account{gap:5px}.profile-header-account .profile{padding:4px 8px;max-width:90px}.profile-avatar-preview-row{align-items:flex-start;gap:12px}.profile-avatar-preview{width:72px;height:72px;font-size:28px}.profile-avatar-preview-row>div:last-child{min-width:0}.profile-avatar-actions{gap:6px}}
