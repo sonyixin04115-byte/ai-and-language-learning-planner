@@ -16,7 +16,7 @@
 .planner-table .table-actions{white-space:nowrap}.table-actions button,.table-actions .button{font-size:12px;padding:5px 8px;white-space:nowrap;display:inline-block}
 .table-actions .link{padding:5px 7px}.table-status{font-size:12px;color:#7b887e}.table-status.finished{color:#22664f}
 .planner-table tr.is-done>*{background:#f0f5ed;color:#7c8d7b}.planner-table tr.is-done .task-name{text-decoration:line-through}
-.planner-table .table-empty{text-align:center;height:108px;white-space:normal;color:#82907f;font-size:13px}
+.planner-table .table-empty{text-align:left;height:108px;white-space:normal;color:#82907f;font-size:13px;padding-left:20px}
 .journal-table{min-width:1240px}.journal-table .task-name{min-width:200px;max-width:320px;overflow:hidden;text-overflow:ellipsis}.note-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis}
 .hero h1{font-size:27px;letter-spacing:0}.hero{margin-bottom:20px}.stats{display:flex;border:1px solid #dce4d6;border-radius:7px;gap:0;background:white;margin-bottom:22px}.stats .stat{flex:1;border:0;border-radius:0;background:transparent;padding:15px 20px}.stats .stat+.stat{border-left:1px solid #e1e7df}.stat strong{font-size:24px;margin:3px 0}.stat strong small{font-size:12px}.stat>span:last-child{display:none}.card{border-radius:8px}.progress{height:4px}.section-title{margin-bottom:16px}.add-form{padding-top:4px}.info-strip{font-size:11px}
 @media(max-width:700px){.hero h1{font-size:23px}.stats{flex-wrap:wrap}.stats .stat{flex:0 0 50%;padding:12px 15px}.stats .stat:nth-child(3){border-left:0;border-top:1px solid #e1e7df}.stats .stat:nth-child(4){border-top:1px solid #e1e7df}.stat strong{font-size:21px}.card{padding:16px}.planner-table th,.planner-table td{padding:10px 12px}.table-scroll{border-radius:4px}}
