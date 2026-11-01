@@ -28,7 +28,7 @@ def frontend_ready():
     try:
         with urllib.request.urlopen(FRONTEND_URL, timeout=0.8) as response:
             html = response.read(262144).decode("utf-8")
-            return response.status == 200 and "知序" in html and "app.js" in html
+            return response.status == 200 and "人工智能学习计划" in html and "app.js" in html
     except (OSError, ValueError, UnicodeError):
         return False
 
@@ -66,7 +66,7 @@ def run(no_browser=False):
     occupied = [port for port in (BACKEND_PORT, FRONTEND_PORT) if port_in_use(port)]
     if occupied:
         if backend_ready() and frontend_ready():
-            print(f"F 盘知序已在运行，打开：{FRONTEND_URL}", flush=True)
+            print(f"F 盘人工智能学习计划已在运行，打开：{FRONTEND_URL}", flush=True)
             print("本次未重复启动服务；原来启动服务的窗口仍需保持运行。", flush=True)
             open_page(no_browser)
             return 0
@@ -81,7 +81,7 @@ def run(no_browser=False):
     env.update(PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
                STUDY_PORT=str(BACKEND_PORT), STUDY_ORIGIN=FRONTEND_URL)
     try:
-        print("正在启动 F 盘知序，请稍候……", flush=True)
+        print("正在启动 F 盘人工智能学习计划，请稍候……", flush=True)
         children.append(subprocess.Popen(
             [sys.executable, "-u", str(ROOT / "backend" / "server.py")],
             cwd=ROOT, env=env))
@@ -120,6 +120,6 @@ def run(no_browser=False):
 if __name__ == "__main__":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    parser = argparse.ArgumentParser(description="启动 F 盘知序每日计划系统")
+    parser = argparse.ArgumentParser(description="启动 F 盘人工智能学习计划系统")
     parser.add_argument("--no-browser", action="store_true", help="启动时不自动打开浏览器")
     sys.exit(run(no_browser=parser.parse_args().no_browser))
