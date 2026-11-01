@@ -129,6 +129,28 @@ class TaskTimingTests(unittest.TestCase):
         self.assertEqual(self.req(f'/tasks/{tid}','PATCH',{'done':True},token=None)[0],401)
         self.assertEqual(self.req(f'/tasks/{tid}','PATCH',{'actual':1441})[0],400)
 
+    def test_legacy_completed_start_only_record_keeps_minutes_until_time_is_explicitly_completed(self):
+        start='2020-01-01T01:00:00Z'
+        with app.conn() as connection:
+            cursor=connection.execute('''INSERT INTO tasks
+                (user_id,day,title,category,planned,actual,done,note,started_at,finished_at)
+                VALUES(1,'2026-11-01','旧版已完成任务','学习',30,35,1,'原笔记',?,NULL)''',(start,))
+            tid=cursor.lastrowid
+        with self.at('2026-11-02T02:00:00Z'):
+            for fields in ({'note':'只改笔记'},{'title':'只改标题'},{'done':True}):
+                with self.subTest(fields=fields):
+                    self.assertEqual(self.req(f'/tasks/{tid}','PATCH',fields)[0],200)
+                    saved=self.task(tid)
+                    self.assertEqual((saved['actual'],saved['started_at'],saved['finished_at'],saved['done']),
+                        (35,start,None,1))
+        self.assertEqual(self.task(tid)['note'],'只改笔记')
+        self.assertEqual(self.task(tid)['title'],'只改标题')
+        self.assertEqual(self.req(f'/tasks/{tid}','PATCH',{'finished_at':'2020-01-01T01:35:30Z'})[0],200)
+        app.init()
+        saved=self.task(tid)
+        self.assertEqual((saved['started_at'],saved['finished_at'],saved['actual'],saved['done']),
+            (start,'2020-01-01T01:35:30Z',36,1))
+
     def test_timestamps_persist_after_migration_and_second_session(self):
         tid=self.create(started_at='2026-11-01T02:00:00Z',finished_at='2026-11-01T02:45:00Z',done=True)
         app.init();app.init()
