@@ -129,7 +129,7 @@ def create_app(db_path=None, origin=None, allow_registration=False):
         return [body]
 
     def reset_html(start_response, code, content, referrer_policy='no-referrer'):
-        body = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>知序 · 重置密码</title>'
+        body = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>人工智能学习计划 · 重置密码</title>'
                 '<style>body{font:16px/1.8 system-ui,sans-serif;background:#f5f7f2;color:#203c35;margin:0;padding:32px 18px}main{max-width:420px;margin:7vh auto;background:#fff;border:1px solid #d9e1d7;border-radius:12px;padding:28px}label{display:block;margin:18px 0}input{display:block;box-sizing:border-box;width:100%;padding:12px;margin-top:6px;border:1px solid #ccd8cc;border-radius:6px;font:inherit}button{background:#22664f;color:white;border:0;border-radius:6px;padding:12px 20px;font:inherit;cursor:pointer}p{color:#6b7e70}a{color:#22664f}</style>'
                 '</head><body><main>' + content + '</main></body></html>').encode('utf-8')
         headers = [('Content-Type','text/html; charset=utf-8'),('Content-Length',str(len(body))),('Cache-Control','no-store'),

@@ -46,7 +46,7 @@ class WSGITests(unittest.TestCase):
 
     def test_same_origin_static_and_private_paths(self):
         status,headers,body=self.request('/')
-        self.assertEqual(status,200);self.assertIn('知序'.encode(),body)
+        self.assertEqual(status,200);self.assertIn('人工智能学习计划'.encode(),body)
         status,headers,body=self.request('/app.js')
         self.assertEqual(status,200);self.assertIn(b"const API='/api';",body);self.assertNotIn(b'const API=\'http://127.0.0.1',body)
         for path in ['/data/study.db','/../backend/study.db','/deploy/wsgi_app.py','/backend/materials_catalog.json']:
