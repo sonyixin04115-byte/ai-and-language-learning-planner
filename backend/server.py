@@ -1,4 +1,4 @@
-import os, json, sqlite3, hashlib, secrets, time, math
+import os, json, sqlite3, hashlib, secrets, time, math, base64, binascii
 from contextlib import contextmanager
 from datetime import date, timedelta, datetime, timezone
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -41,12 +41,14 @@ def conn():
 
 def init():
     with conn() as c:
-        c.executescript('''CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, username TEXT UNIQUE, name TEXT, password TEXT, salt TEXT, minutes INTEGER DEFAULT 180, start TEXT);
+        c.executescript('''CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, username TEXT UNIQUE, name TEXT, password TEXT, salt TEXT, minutes INTEGER DEFAULT 180, start TEXT, avatar TEXT DEFAULT '');
         CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id INTEGER, expires REAL);
         CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY, user_id INTEGER, day TEXT, title TEXT, category TEXT, planned INTEGER, actual INTEGER DEFAULT 0, done INTEGER DEFAULT 0, note TEXT DEFAULT '', archived INTEGER DEFAULT 0, created_source TEXT DEFAULT 'manual');
         CREATE TABLE IF NOT EXISTS courses(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, url TEXT DEFAULT '', description TEXT DEFAULT '', source TEXT DEFAULT 'user', archived INTEGER DEFAULT 0, local_key TEXT);
         CREATE TABLE IF NOT EXISTS lesson_progress(user_id INTEGER NOT NULL, course_id INTEGER NOT NULL, lesson_id TEXT NOT NULL, completed_at REAL NOT NULL, PRIMARY KEY(user_id,course_id,lesson_id));
         CREATE TABLE IF NOT EXISTS course_defaults(user_id INTEGER PRIMARY KEY);''')
+        user_columns={row['name'] for row in c.execute('PRAGMA table_info(users)')}
+        if 'avatar' not in user_columns:c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
         columns = {row['name'] for row in c.execute('PRAGMA table_info(tasks)')}
         if 'archived' not in columns: c.execute('ALTER TABLE tasks ADD COLUMN archived INTEGER DEFAULT 0')
         if 'created_source' not in columns: c.execute("ALTER TABLE tasks ADD COLUMN created_source TEXT DEFAULT 'manual'")
@@ -61,6 +63,98 @@ def seed_supplements(c, uid):
     c.executemany("INSERT INTO courses(user_id,title,url,description,source) VALUES(?,?,?,?,'supplement')",
                   [(uid, title, url, description) for title, url, description in SUPPLEMENTS])
     c.execute('INSERT INTO course_defaults(user_id) VALUES(?)', (uid,))
+
+def jpeg_dimensions(image):
+    """Parse a bounded, standalone 8-bit JPEG; never trust client dimensions."""
+    invalid=ValueError('头像需为有效 JPEG 图片')
+    if not image.startswith(b'\xff\xd8') or not image.endswith(b'\xff\xd9'):raise invalid
+    position=2;frame=None;components={};quantizers=set();huffman=set();scans=0;entropy=0
+    while position<len(image):
+        if image[position]!=255:raise invalid
+        while position<len(image) and image[position]==255:position+=1
+        if position>=len(image):raise invalid
+        marker=image[position];position+=1
+        if marker==0xd9:
+            if position!=len(image) or frame is None or not scans or not entropy:raise invalid
+            return frame
+        # A standalone JPEG has one SOI and no restart markers outside a scan.
+        if marker in {0,1,0xd8} or 0xd0<=marker<=0xd7:raise invalid
+        if position+2>len(image):raise invalid
+        length=int.from_bytes(image[position:position+2],'big')
+        if length<2 or position+length>len(image)-2:raise invalid
+        segment=image[position+2:position+length];position+=length
+        if marker in {0xc0,0xc1,0xc2}:
+            if frame is not None or len(segment)<6 or segment[0]!=8:raise invalid
+            height=int.from_bytes(segment[1:3],'big');width=int.from_bytes(segment[3:5],'big');count=segment[5]
+            if not 1<=width<=512 or not 1<=height<=512:raise ValueError('头像尺寸需为 1–512 像素')
+            if count not in {1,3} or len(segment)!=6+3*count:raise invalid
+            for offset in range(6,len(segment),3):
+                key,sampling,table=segment[offset:offset+3]
+                if key in components or not 1<=sampling>>4<=4 or not 1<=sampling&15<=4 or table>3:raise invalid
+                components[key]=table
+            frame=(width,height)
+        elif marker==0xdb:
+            cursor=0
+            while cursor<len(segment):
+                table=segment[cursor];cursor+=1
+                if table>>4 not in {0,1} or table&15>3:raise invalid
+                cursor+=64*(1+(table>>4))
+                if cursor>len(segment):raise invalid
+                quantizers.add(table&15)
+            if not segment:raise invalid
+        elif marker==0xc4:
+            cursor=0
+            while cursor<len(segment):
+                if cursor+17>len(segment):raise invalid
+                table=segment[cursor];counts=segment[cursor+1:cursor+17];cursor+=17
+                if table>>4 not in {0,1} or table&15>3 or not 1<=sum(counts)<=256:raise invalid
+                remaining=1
+                for count in counts:
+                    remaining=remaining*2-count
+                    if remaining<0:raise invalid
+                cursor+=sum(counts)
+                if cursor>len(segment):raise invalid
+                huffman.add((table>>4,table&15))
+            if not segment:raise invalid
+        elif marker==0xda:
+            if frame is None or not segment:raise invalid
+            count=segment[0]
+            if not 1<=count<=len(components) or len(segment)!=4+2*count:raise invalid
+            first,last,approximation=segment[-3:]
+            if not 0<=first<=last<=63 or approximation>>4>13 or approximation&15>13:raise invalid
+            seen=set()
+            for offset in range(1,1+2*count,2):
+                key,tables=segment[offset:offset+2]
+                if key not in components or key in seen or components[key] not in quantizers:raise invalid
+                seen.add(key)
+                if first==0 and (0,tables>>4) not in huffman:raise invalid
+                if last>0 and (1,tables&15) not in huffman:raise invalid
+            scans+=1
+            while position<len(image):
+                if image[position]!=255:entropy+=1;position+=1;continue
+                next_marker=position+1
+                while next_marker<len(image) and image[next_marker]==255:next_marker+=1
+                if next_marker>=len(image):raise invalid
+                if image[next_marker]==0 or 0xd0<=image[next_marker]<=0xd7:
+                    entropy+=image[next_marker]==0;position=next_marker+1
+                else:break
+        elif marker==0xdd:
+            if len(segment)!=2:raise invalid
+        elif not (0xe0<=marker<=0xef or marker==0xfe):raise invalid
+    raise invalid
+
+def avatar_input(value):
+    """Accept only a small canonical JPEG data URL, or an explicit removal."""
+    if not isinstance(value,str):raise ValueError('头像格式无效')
+    if value=='':return ''
+    prefix='data:image/jpeg;base64,'
+    if len(value)>54000:raise ValueError('头像数据过长，请重新选择图片')
+    if not value.startswith(prefix):raise ValueError('头像需为 JPEG 图片')
+    try:image=base64.b64decode(value[len(prefix):],validate=True)
+    except (binascii.Error,ValueError):raise ValueError('头像编码无效')
+    if not image or len(image)>40000:raise ValueError('头像图片不能超过 40000 字节')
+    jpeg_dimensions(image)
+    return prefix+base64.b64encode(image).decode('ascii')
 
 def course_input(data, old=None):
     old = dict(old) if old is not None else {}
@@ -205,7 +299,14 @@ class Handler(BaseHTTPRequestHandler):
                     courses=[]
                     for row in c.execute('SELECT id,title,url,description,source,local_key FROM courses WHERE user_id=? AND archived=0 ORDER BY CASE source WHEN \'user\' THEN 0 ELSE 1 END,id',(uid,)):
                         course=dict(row);course['source_label']='我的课程' if course['source']=='user' else '补充推荐';course.update(materials.metadata(course));course['completed_count']=len(completed_lessons(c,uid,course));courses.append(course)
-                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start')}, 'tasks':[dict(t) for t in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source,started_at,finished_at FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,))], 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start','avatar')}, 'tasks':[dict(t) for t in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source,started_at,finished_at FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,))], 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                if path == '/api/avatar':
+                    if self.command!='PATCH':return self.reply(405, {'error':'不支持的操作'})
+                    if not isinstance(data,dict) or set(data)!={'avatar'}:raise ValueError('请只提交头像数据')
+                    avatar=avatar_input(data['avatar'])
+                    c.execute('UPDATE users SET avatar=? WHERE id=?',(avatar,uid))
+                    c.commit()
+                    return self.reply(200, {'avatar':avatar})
                 if path == '/api/settings' and self.command == 'PATCH':
                     minutes = int(data['minutes'])
                     if not 30 <= minutes <= 600: raise ValueError('每日时间应为 30–600 分钟')
