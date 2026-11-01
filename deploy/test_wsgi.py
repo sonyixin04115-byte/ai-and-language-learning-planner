@@ -7,6 +7,7 @@ import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.parse import urlsplit
 from wsgiref.util import setup_testing_defaults
 from wsgiref.validate import validator
 
@@ -27,7 +28,8 @@ class WSGITests(unittest.TestCase):
     def request(self,path,method="GET",data=None,cookie=None,origin=ORIGIN,host=None,length=None,app=None,content_type="application/json"):
         raw=json.dumps(data).encode() if data is not None else b""
         environ={};setup_testing_defaults(environ)
-        environ.update(PATH_INFO=path,QUERY_STRING='',REQUEST_METHOD=method,HTTP_HOST=host or ORIGIN.removeprefix('https://'),CONTENT_LENGTH=str(len(raw) if length is None else length),CONTENT_TYPE=content_type,REMOTE_ADDR="127.0.0.1",**{"wsgi.input":io.BytesIO(raw),"wsgi.url_scheme":"https"})
+        parsed_path=urlsplit(path)
+        environ.update(PATH_INFO=parsed_path.path,QUERY_STRING=parsed_path.query,REQUEST_METHOD=method,HTTP_HOST=host or ORIGIN.removeprefix('https://'),CONTENT_LENGTH=str(len(raw) if length is None else length),CONTENT_TYPE=content_type,REMOTE_ADDR="127.0.0.1",**{"wsgi.input":io.BytesIO(raw),"wsgi.url_scheme":"https"})
         if origin:environ['HTTP_ORIGIN']=origin
         if cookie:environ['HTTP_COOKIE']=cookie
         status=[];headers=[]
@@ -76,6 +78,29 @@ class WSGITests(unittest.TestCase):
             _,headers=self.signup()
         parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
         self.assertTrue(parsed['session']['secure'])
+
+    def test_language_query_parameters_reach_the_shared_backend_and_persist(self):
+        cookie,_=self.signup()
+        url='/api/language-practice?language=english&level=B2&day=2026-11-02&direction=to_zh'
+        status,_,body=self.request(url,cookie=cookie)
+        result=json.loads(body)
+        self.assertEqual(status,200,result)
+        self.assertEqual((result['language'],result['level'],result['day'],result['direction']),
+                         ('english','B2','2026-11-02','to_zh'))
+        self.assertEqual(len(result['items']),5)
+        item=result['items'][0]
+        payload={'language':'english','level':'B2','day':item['day'],'direction':'to_zh',
+                 'exercise_id':item['id'],'answer':'My private WSGI answer','review':True}
+        self.assertEqual(self.request('/api/language-practice','PATCH',payload,cookie)[0],200)
+        restarted=validator(create_app(self.db,ORIGIN))
+        status,_,body=self.request(url,cookie=cookie,app=restarted)
+        self.assertEqual(status,200)
+        self.assertEqual(json.loads(body)['items'][0]['answer'],'My private WSGI answer')
+        status,_,body=self.request('/api/language-practice/review?language=english&level=B1',cookie=cookie,app=restarted)
+        self.assertEqual(status,200);self.assertEqual(json.loads(body)['items'],[])
+        status,_,body=self.request('/api/language-practice?language=korean&level=6&day=2026-11-03&direction=to_target',cookie=cookie,app=restarted)
+        self.assertEqual(status,200)
+        self.assertEqual((json.loads(body)['language'],json.loads(body)['level']),('korean','6'))
 
     def test_pythonanywhere_blank_content_length_after_login(self):
         # PythonAnywhere's uWSGI environment uses blank metadata for GETs.

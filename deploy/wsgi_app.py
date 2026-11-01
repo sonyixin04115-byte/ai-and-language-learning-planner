@@ -87,6 +87,8 @@ def create_app(db_path=None, origin=None, allow_registration=False):
             if self.command == "HEAD":
                 self.command = "GET"
             self.path = environ.get("PATH_INFO", "/")
+            if environ.get("QUERY_STRING"):
+                self.path += "?" + environ["QUERY_STRING"]
             self.headers = Message()
             for key, value in environ.items():
                 if key.startswith("HTTP_") and key not in {"HTTP_CONTENT_LENGTH", "HTTP_CONTENT_TYPE"}:
