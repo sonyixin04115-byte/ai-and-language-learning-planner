@@ -3,10 +3,11 @@ from contextlib import contextmanager
 from datetime import date, timedelta, datetime, timezone
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 import sys
 if str(ROOT_PATH := Path(__file__).resolve().parent) not in sys.path: sys.path.insert(0,str(ROOT_PATH))
 import materials
+import language_learning
 
 ROOT = Path(__file__).resolve().parent
 DB = Path(os.environ.get('STUDY_DB', str(ROOT / 'study.db')))
@@ -58,6 +59,7 @@ def init():
         course_columns={row['name'] for row in c.execute('PRAGMA table_info(courses)')}
         if 'local_key' not in course_columns:c.execute('ALTER TABLE courses ADD COLUMN local_key TEXT')
         for user in c.execute('SELECT id FROM users').fetchall(): seed_supplements(c, user['id'])
+        language_learning.init(c)
 
 def seed_supplements(c, uid):
     if c.execute('SELECT user_id FROM course_defaults WHERE user_id=?', (uid,)).fetchone(): return
@@ -172,11 +174,25 @@ def course_input(data, old=None):
             raise ValueError('链接需使用完整的 http 或 https 地址')
     return title, url, description, source
 
+def course_lessons(course):
+    external = language_learning.external_lessons(course)
+    return external if external is not None else materials.lesson_list(course)
+
+def course_metadata(course):
+    external = language_learning.external_lessons(course)
+    if external is not None:
+        return {'local_key':None,'is_local':False,'is_external':True,'lesson_count':len(external),
+                'video_count':sum(item.get('format')=='视频' for item in external),
+                'trackable_count':sum(language_learning.trackable(item) for item in external),'available':True}
+    metadata = materials.metadata(course)
+    metadata['trackable_count'] = metadata['video_count']
+    return metadata
+
 def completed_lessons(c, uid, course, lessons=None):
-    """Count only video IDs still present in this course's current catalog."""
-    if lessons is None: lessons = materials.lesson_list(course)
-    videos = {lesson['id'] for lesson in lessons or [] if lesson['kind']=='video'}
-    return videos.intersection(row['lesson_id'] for row in c.execute(
+    """Count only currently valid, trackable local or official external lessons."""
+    if lessons is None: lessons = course_lessons(course)
+    trackable = {lesson['id'] for lesson in lessons or [] if language_learning.trackable(lesson)}
+    return trackable.intersection(row['lesson_id'] for row in c.execute(
         'SELECT lesson_id FROM lesson_progress WHERE user_id=? AND course_id=?',
         (uid,course['id'])))
 
@@ -341,6 +357,7 @@ class Handler(BaseHTTPRequestHandler):
                         except sqlite3.IntegrityError: return self.reply(409, {'error':'用户名已存在'})
                         uid = cur.lastrowid
                         seed_supplements(c, uid)
+                        language_learning.seed_courses(c, uid)
                     else:
                         u = c.execute('SELECT * FROM users WHERE username=?',(username,)).fetchone()
                         salt = u['salt'] if u else 'invalid'
@@ -360,12 +377,26 @@ class Handler(BaseHTTPRequestHandler):
                     c.execute('DELETE FROM sessions WHERE token=?',(token,)); return self.reply(200, {'ok':True},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 if path == '/api/state' and self.command == 'GET':
                     courses=[]
-                    for row in c.execute('SELECT id,title,url,description,source,local_key FROM courses WHERE user_id=? AND archived=0 ORDER BY CASE source WHEN \'user\' THEN 0 ELSE 1 END,id',(uid,)):
-                        course=dict(row);course['source_label']='我的课程' if course['source']=='user' else '补充推荐';course.update(materials.metadata(course));course['completed_count']=len(completed_lessons(c,uid,course));courses.append(course)
+                    for row in c.execute('SELECT id,title,url,description,source,local_key,category,curriculum_key FROM courses WHERE user_id=? AND archived=0 ORDER BY CASE source WHEN \'user\' THEN 0 ELSE 1 END,id',(uid,)):
+                        course=dict(row);course['source_label']='我的课程' if course['source']=='user' else '补充推荐';course.update(course_metadata(course));course['completed_count']=len(completed_lessons(c,uid,course));courses.append(course)
                     tasks=[]
                     for row in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source,started_at,finished_at,pause_history FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,)):
                         task=dict(row);task['pause_intervals']=serialize_pause_history(read_pause_history(task.pop('pause_history')));tasks.append(task)
-                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start','avatar')}, 'tasks':tasks, 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start','avatar')}, 'tasks':tasks, 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'language_settings':language_learning.settings(c,uid), 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                if path in ('/api/language-practice','/api/language-practice/review','/api/language-settings'):
+                    query={key:values[-1] for key,values in parse_qs(urlsplit(self.path).query).items()}
+                    if path=='/api/language-practice' and self.command=='GET':
+                        result=language_learning.daily(c,uid,query)
+                    elif path=='/api/language-practice/review' and self.command=='GET':
+                        result=language_learning.reviews(c,uid,query)
+                    elif path=='/api/language-practice' and self.command=='PATCH':
+                        c.execute('BEGIN IMMEDIATE')
+                        result=language_learning.save_answer(c,uid,data)
+                    elif path=='/api/language-settings' and self.command=='PATCH':
+                        result=language_learning.save_settings(c,uid,data)
+                    else:return self.reply(405, {'error':'不支持的操作'})
+                    c.commit()
+                    return self.reply(200,result)
                 if path == '/api/avatar':
                     if self.command!='PATCH':return self.reply(405, {'error':'不支持的操作'})
                     if not isinstance(data,dict) or set(data)!={'avatar'}:raise ValueError('请只提交头像数据')
@@ -387,28 +418,29 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply(200, {'ok':True,'restored':result.rowcount})
                 if path == '/api/courses' and self.command == 'POST':
                     title,url,description,source=course_input(data)
-                    result=c.execute('INSERT INTO courses(user_id,title,url,description,source) VALUES(?,?,?,?,?)',(uid,title,url,description,source))
+                    category=language_learning.category(data)
+                    result=c.execute('INSERT INTO courses(user_id,title,url,description,source,category) VALUES(?,?,?,?,?,?)',(uid,title,url,description,source,category))
                     return self.reply(201, {'ok':True,'id':result.lastrowid})
                 if path.startswith('/api/materials/') and self.command in ('GET','HEAD'):
                     owned={row['local_key'] for row in c.execute('SELECT local_key FROM courses WHERE user_id=? AND archived=0 AND local_key IS NOT NULL',(uid,))}
                     return materials.stream(self,path.rsplit('/',1)[1],owned,ORIGIN)
                 if path.startswith('/api/courses/') and path.endswith('/lessons') and self.command=='GET':
-                    cid=int(path.split('/')[-2]);row=c.execute('SELECT id,title,local_key FROM courses WHERE id=? AND user_id=? AND archived=0',(cid,uid)).fetchone()
+                    cid=int(path.split('/')[-2]);row=c.execute('SELECT id,title,local_key,category,curriculum_key FROM courses WHERE id=? AND user_id=? AND archived=0',(cid,uid)).fetchone()
                     if not row:return self.reply(404,{'error':'课程不存在'})
-                    course=dict(row);lessons=materials.lesson_list(course)
-                    if lessons is None:return self.reply(404,{'error':'这门课程没有本地资料目录'})
+                    course=dict(row);lessons=course_lessons(course)
+                    if lessons is None:return self.reply(404,{'error':'这门课程没有可跟踪的课时目录'})
                     completed=completed_lessons(c,uid,course,lessons)
-                    for lesson in lessons:lesson['done']=lesson['kind']=='video' and lesson['id'] in completed
-                    course.update(materials.metadata(course));course['completed_count']=len(completed)
+                    for lesson in lessons:lesson['trackable']=language_learning.trackable(lesson);lesson['done']=lesson['trackable'] and lesson['id'] in completed
+                    course.update(course_metadata(course));course['completed_count']=len(completed)
                     return self.reply(200,{'course':course,'lessons':lessons})
                 parts=path.split('/')
                 if len(parts)==6 and parts[1:3]==['api','courses'] and parts[4]=='lessons':
                     cid=int(parts[3]);lid=parts[5]
-                    row=c.execute('SELECT id,title,local_key FROM courses WHERE id=? AND user_id=? AND archived=0',(cid,uid)).fetchone()
+                    row=c.execute('SELECT id,title,local_key,category,curriculum_key FROM courses WHERE id=? AND user_id=? AND archived=0',(cid,uid)).fetchone()
                     if not row:return self.reply(404,{'error':'课程不存在'})
-                    course=dict(row);lessons=materials.lesson_list(course)
-                    lesson=next((item for item in lessons or [] if item['id']==lid and item['kind']=='video'),None)
-                    if not lesson:return self.reply(404,{'error':'视频课时不存在'})
+                    course=dict(row);lessons=course_lessons(course)
+                    lesson=next((item for item in lessons or [] if item['id']==lid and language_learning.trackable(item)),None)
+                    if not lesson:return self.reply(404,{'error':'课时不存在或不能勾选'})
                     if self.command!='PATCH':return self.reply(405,{'error':'不支持的操作'})
                     if not isinstance(data,dict) or type(data.get('done')) is not bool:raise ValueError('完成状态应为 true 或 false')
                     if data['done']:
@@ -422,7 +454,8 @@ class Handler(BaseHTTPRequestHandler):
                     if self.command=='DELETE': c.execute('UPDATE courses SET archived=1 WHERE id=? AND user_id=?',(cid,uid))
                     elif self.command=='PATCH':
                         title,url,description,source=course_input(data,old)
-                        c.execute('UPDATE courses SET title=?,url=?,description=?,source=? WHERE id=? AND user_id=?',(title,url,description,source,cid,uid))
+                        category=language_learning.category(data,old)
+                        c.execute('UPDATE courses SET title=?,url=?,description=?,source=?,category=? WHERE id=? AND user_id=?',(title,url,description,source,category,cid,uid))
                     else: return self.reply(405, {'error':'不支持的操作'})
                     return self.reply(200, {'ok':True})
                 if path == '/api/tasks' and self.command == 'POST':

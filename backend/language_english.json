@@ -1,0 +1,1537 @@
+{
+  "version": 1,
+  "notice": "自编分级语言练习，非考试评级或自动批改。系统只提供语法提示、核对清单和参考句；译文或造句可能有多种正确表达，需自行核对。CEFR字母标签仅作练习难度路线参考，不是完整官方等级标准。人名与情境均为虚构示例，不代表你的教授要求、课程规定或真实实验结论。",
+  "levels": {
+    "A1": {
+      "label": "A1 · 基础句子",
+      "notice": "适合按需补查基础句型。标签用于学习路线参考，不是完整CEFR课程或等级评定。先理解主语、动词和基本语序。",
+      "points": [
+        {
+          "id": "en-a1-001",
+          "knowledge_point": "be动词：am、is、are",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "用be说明身份、状态或位置。I后用am；单数he/she/it后用is；you/we/they后用are。",
+          "hint": "先找主语，再选am、is或are。",
+          "checklist": [
+            "主语与be是否一致？",
+            "句末是否有标点？"
+          ],
+          "examples": [
+            {
+              "target": "I am a new student.",
+              "zh": "我是一名新生。"
+            },
+            {
+              "target": "The meeting is at three.",
+              "zh": "会议在三点。"
+            },
+            {
+              "target": "We are ready for class.",
+              "zh": "我们准备好上课了。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-002",
+          "knowledge_point": "形容词性物主代词：my、your、her、our",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "my、your、his、her、our、their放在名词前，表示所属关系。已有物主代词时通常不再加a或the。",
+          "hint": "用“谁的＋名词”检查所属关系。",
+          "checklist": [
+            "物主代词后是否接名词？",
+            "是否误加了a或the？"
+          ],
+          "examples": [
+            {
+              "target": "This is my notebook.",
+              "zh": "这是我的笔记本。"
+            },
+            {
+              "target": "Her name is Mina.",
+              "zh": "她的名字是米娜。"
+            },
+            {
+              "target": "Our class starts at nine.",
+              "zh": "我们的课九点开始。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-003",
+          "knowledge_point": "不定冠词a与an",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "a或an放在可数名词单数前。选择取决于后面词的开头发音：元音音素前用an，而不是只看字母。",
+          "hint": "说一个可数事物时，检查是否需要a或an。",
+          "checklist": [
+            "名词是可数单数吗？",
+            "a或an与后面的发音相配吗？"
+          ],
+          "examples": [
+            {
+              "target": "I have a question.",
+              "zh": "我有一个问题。"
+            },
+            {
+              "target": "She uses an old laptop.",
+              "zh": "她用一台旧笔记本电脑。"
+            },
+            {
+              "target": "He is an English teacher.",
+              "zh": "他是一名英语老师。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-004",
+          "knowledge_point": "可数名词复数与these、those",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "两个或以上的可数事物一般使用复数。these指这些，those指那些，后面接复数名词；注意不规则复数不能一律加s。",
+          "hint": "数字大于一时，检查名词是否用了复数。",
+          "checklist": [
+            "数量与名词单复数一致吗？",
+            "these或those后是否接复数？"
+          ],
+          "examples": [
+            {
+              "target": "Two students are outside.",
+              "zh": "两名学生在外面。"
+            },
+            {
+              "target": "These books are for my class.",
+              "zh": "这些书是我的课程要用的。"
+            },
+            {
+              "target": "I need three clean cups.",
+              "zh": "我需要三个干净杯子。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-005",
+          "knowledge_point": "一般现在时：习惯与第三人称单数",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "描述日常习惯和通常事实可以用一般现在时。肯定句中，he/she/it或单数名词作主语时，实义动词通常加s或es。",
+          "hint": "先问这是习惯还是正在发生的动作。",
+          "checklist": [
+            "是否在描述日常习惯或通常情况？",
+            "第三人称单数的动词形式正确吗？"
+          ],
+          "examples": [
+            {
+              "target": "I study English after lunch.",
+              "zh": "我午饭后学习英语。"
+            },
+            {
+              "target": "The library opens at eight.",
+              "zh": "图书馆八点开门。"
+            },
+            {
+              "target": "We walk to class every morning.",
+              "zh": "我们每天早晨步行去上课。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-006",
+          "knowledge_point": "一般现在时否定：do not与does not",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "实义动词的现在时否定句使用do not或does not。用了does not之后，后面的实义动词恢复原形。",
+          "hint": "不要同时写does not和带s的实义动词。",
+          "checklist": [
+            "单数第三人称是否用了does not？",
+            "实义动词是否保留原形？"
+          ],
+          "examples": [
+            {
+              "target": "I do not drink coffee at night.",
+              "zh": "我晚上不喝咖啡。"
+            },
+            {
+              "target": "He does not use this room.",
+              "zh": "他不使用这间房间。"
+            },
+            {
+              "target": "We do not have class on Friday.",
+              "zh": "我们星期五没有课。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-007",
+          "knowledge_point": "一般现在时一般疑问句：Do或Does开头",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "询问习惯或事实时，可以把Do或Does放在主语前。后面使用实义动词原形；第三人称单数用Does。",
+          "hint": "按“Do或Does＋主语＋动词原形”组织问题。",
+          "checklist": [
+            "Do或Does与主语是否一致？",
+            "句末是否用了问号？"
+          ],
+          "examples": [
+            {
+              "target": "Do you work here?",
+              "zh": "你在这里工作吗？"
+            },
+            {
+              "target": "Does this bus stop near campus?",
+              "zh": "这辆公交车在校园附近停靠吗？"
+            },
+            {
+              "target": "Do they need our names?",
+              "zh": "他们需要我们的名字吗？"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-008",
+          "knowledge_point": "特殊疑问句：what、where与when",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "what询问事物，where询问地点，when询问时间。be疑问句把be放在主语前；实义动词问题一般借助do或does。",
+          "hint": "先确定想问什么，再选择疑问词。",
+          "checklist": [
+            "疑问词是否符合想问的信息？",
+            "be或助动词的位置正确吗？"
+          ],
+          "examples": [
+            {
+              "target": "Where is the classroom?",
+              "zh": "教室在哪里？"
+            },
+            {
+              "target": "When does the class start?",
+              "zh": "这节课什么时候开始？"
+            },
+            {
+              "target": "What do you need?",
+              "zh": "你需要什么？"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-009",
+          "knowledge_point": "there is与there are：表示存在",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "there is后通常接单数可数名词或不可数名词，there are后接复数名词，用来介绍某处有什么。",
+          "hint": "先看要介绍的事物是单数还是复数。",
+          "checklist": [
+            "is或are是否与后面的名词一致？",
+            "是否在表达“有”，而不是“拥有”的动作？"
+          ],
+          "examples": [
+            {
+              "target": "There is a quiet room upstairs.",
+              "zh": "楼上有一间安静的房间。"
+            },
+            {
+              "target": "There are two chairs by the door.",
+              "zh": "门边有两把椅子。"
+            },
+            {
+              "target": "There is no class today.",
+              "zh": "今天没有课。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-010",
+          "knowledge_point": "地点介词：in、under与next to",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "in表示在里面，under表示在下面，next to表示紧挨着。位置短语通常放在be动词后，说明人或物的位置。",
+          "hint": "想象物体之间的空间位置，再选介词。",
+          "checklist": [
+            "介词表达的位置与中文一致吗？",
+            "介词后是否有合适的名词短语？"
+          ],
+          "examples": [
+            {
+              "target": "My bag is under the chair.",
+              "zh": "我的包在椅子下面。"
+            },
+            {
+              "target": "The key is in my pocket.",
+              "zh": "钥匙在我的口袋里。"
+            },
+            {
+              "target": "The lab is next to the library.",
+              "zh": "实验室在图书馆旁边。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-011",
+          "knowledge_point": "can：能力、许可与简单请求",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "can后接动词原形，不随主语变化。它可以表达能力或可行性，也可用于简单请求；问教授时也要注意语气和场合。",
+          "hint": "can后面不要加to，也不要给动词加s。",
+          "checklist": [
+            "can后是否用了动词原形？",
+            "请求句是否有问号并保持礼貌？"
+          ],
+          "examples": [
+            {
+              "target": "I can read this sentence.",
+              "zh": "我能读这个句子。"
+            },
+            {
+              "target": "Can I ask a question?",
+              "zh": "我可以问一个问题吗？"
+            },
+            {
+              "target": "We can meet after class.",
+              "zh": "我们可以在课后见面。"
+            }
+          ]
+        },
+        {
+          "id": "en-a1-012",
+          "knowledge_point": "祈使句与Please：操作说明",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "祈使句通常用动词原形开头，主语you常省略。否定形式使用Do not。它适合操作说明或课堂指令，不宜用生硬命令的口气向教授提要求。",
+          "hint": "把它当作说明或提醒，必要时加please。",
+          "checklist": [
+            "开头是否使用动词原形？",
+            "情境是否适合指令语气？"
+          ],
+          "examples": [
+            {
+              "target": "Please write your name here.",
+              "zh": "请在这里写下你的名字。"
+            },
+            {
+              "target": "Open the file on your laptop.",
+              "zh": "在你的笔记本电脑上打开这个文件。"
+            },
+            {
+              "target": "Do not close the window.",
+              "zh": "不要关闭这个窗口。"
+            }
+          ]
+        }
+      ]
+    },
+    "A2": {
+      "label": "A2 · 日常与校园表达",
+      "notice": "用于巩固日常叙述、安排、比较和建议。基础已熟练时可用造句自检后选择更高难度。",
+      "points": [
+        {
+          "id": "en-a2-001",
+          "knowledge_point": "一般过去时：已经结束的事件",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "过去已经发生并结束的事件用一般过去时。肯定句要注意规则或不规则过去式；否定句用了did not后，实义动词用原形。",
+          "hint": "yesterday或last week等时间通常提示已结束的过去。",
+          "checklist": [
+            "动词是否用了正确过去式？",
+            "did not后是否恢复了原形？"
+          ],
+          "examples": [
+            {
+              "target": "I joined a study group last week.",
+              "zh": "我上周加入了一个学习小组。"
+            },
+            {
+              "target": "She sent the file yesterday.",
+              "zh": "她昨天发送了这个文件。"
+            },
+            {
+              "target": "We did not finish the exercise.",
+              "zh": "我们没有完成这道练习。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-002",
+          "knowledge_point": "频度副词：usually、often与always的位置",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "频度副词表示事情发生的频繁程度，通常放在实义动词前、be动词后。它们常和描述习惯的一般现在时搭配。",
+          "hint": "有be时看后面；普通实义动词通常看前面。",
+          "checklist": [
+            "副词位置是否合适？",
+            "频率含义是否与中文一致？"
+          ],
+          "examples": [
+            {
+              "target": "I usually review my notes after dinner.",
+              "zh": "我通常在晚饭后复习笔记。"
+            },
+            {
+              "target": "The classroom is often quiet before eight.",
+              "zh": "教室在八点前经常很安静。"
+            },
+            {
+              "target": "We always check the room number.",
+              "zh": "我们总会核对房间号。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-003",
+          "knowledge_point": "过去进行时：过去某时正在进行",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "过去进行时使用was或were加动词ing，突出过去某个时间点正在进行的动作，也能作为另一件事发生时的背景。",
+          "hint": "区分背景动作与突然发生的短动作。",
+          "checklist": [
+            "was或were与主语是否一致？",
+            "背景动作是否用了ing形式？"
+          ],
+          "examples": [
+            {
+              "target": "I was reading when you called.",
+              "zh": "你打电话时，我正在读书。"
+            },
+            {
+              "target": "They were discussing the homework at six.",
+              "zh": "他们六点时正在讨论作业。"
+            },
+            {
+              "target": "We were waiting outside the lab when it began to rain.",
+              "zh": "开始下雨时，我们正在实验室外面等候。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-004",
+          "knowledge_point": "be going to：事先的打算",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "be going to后接动词原形，常用来表达已经有的打算。be必须随主语变化，不能漏掉。",
+          "hint": "明确是谁已经打算做什么。",
+          "checklist": [
+            "是否保留了合适的be动词？",
+            "going to后是否使用动词原形？"
+          ],
+          "examples": [
+            {
+              "target": "I am going to review the slides tonight.",
+              "zh": "我打算今晚复习幻灯片。"
+            },
+            {
+              "target": "She is going to ask about the deadline.",
+              "zh": "她打算询问截止日期。"
+            },
+            {
+              "target": "We are going to practise in the library.",
+              "zh": "我们打算在图书馆练习。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-005",
+          "knowledge_point": "现在进行时表达已安排的将来",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "现在进行时除表示正在发生的动作外，也可表示已经安排好的未来活动，通常和明确的未来时间连用。",
+          "hint": "这是已有安排时，用be加ing并交代未来时间。",
+          "checklist": [
+            "是否有明确的未来安排或时间？",
+            "是否误把将来的安排理解为此刻正在做？"
+          ],
+          "examples": [
+            {
+              "target": "I am meeting my tutor tomorrow afternoon.",
+              "zh": "我已经安排好明天下午见导师。"
+            },
+            {
+              "target": "We are presenting our poster on Monday.",
+              "zh": "我们将于星期一展示我们的海报。"
+            },
+            {
+              "target": "She is taking the train to Seoul this weekend.",
+              "zh": "她已经安排好这周末乘火车去首尔。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-006",
+          "knowledge_point": "will：临时决定、主动帮忙与预测",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "will后接动词原形，常用于说话时作出的决定、主动提供帮助或一般预测。它与事先安排好的计划表达侧重点不同。",
+          "hint": "主动说“我来做”时，可以考虑I will。",
+          "checklist": [
+            "will后是否使用动词原形？",
+            "语境是临时决定、帮忙还是预测？"
+          ],
+          "examples": [
+            {
+              "target": "I will carry the books for you.",
+              "zh": "我来帮你拿这些书。"
+            },
+            {
+              "target": "I will check the room number now.",
+              "zh": "我现在就核对一下房间号。"
+            },
+            {
+              "target": "The exercise will take about ten minutes.",
+              "zh": "这道练习大约需要十分钟。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-007",
+          "knowledge_point": "比较级与than",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "比较两个人或事物时，可以用比较级加than。短形容词常加er，较长的形容词常用more；不要同时叠加more和er。",
+          "hint": "先确定比较的两项，以及比较的是哪种性质。",
+          "checklist": [
+            "比较级形式是否正确？",
+            "是否误写了more easier等双重比较级？"
+          ],
+          "examples": [
+            {
+              "target": "This explanation is clearer than the first one.",
+              "zh": "这个解释比第一个解释更清楚。"
+            },
+            {
+              "target": "The new room is quieter than the old one.",
+              "zh": "新房间比旧房间更安静。"
+            },
+            {
+              "target": "This method is more useful than the shortcut.",
+              "zh": "这个方法比那条捷径更有用。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-008",
+          "knowledge_point": "最高级与比较范围",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "在一组人或事物中比较某项性质，可以用最高级。形容词最高级前通常用the，并交代所在的范围。",
+          "hint": "最高级通常不是只比较两个对象。",
+          "checklist": [
+            "是否使用了正确的最高级形式？",
+            "是否给出了比较范围？"
+          ],
+          "examples": [
+            {
+              "target": "This is the quietest room in the building.",
+              "zh": "这是这栋楼里最安静的房间。"
+            },
+            {
+              "target": "Monday is my busiest day of the week.",
+              "zh": "星期一是我一周中最忙的一天。"
+            },
+            {
+              "target": "That is the most important question on the list.",
+              "zh": "那是清单上最重要的问题。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-009",
+          "knowledge_point": "some与any：可数和不可数数量",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "some常用于肯定句，any常用于疑问句或否定句。它们可以修饰复数可数名词或不可数名词；礼貌提供或请求时也常使用some。",
+          "hint": "先判断名词能不能直接加复数，再看句子用途。",
+          "checklist": [
+            "paper或information等不可数名词是否误加s？",
+            "some或any是否符合句子语境？"
+          ],
+          "examples": [
+            {
+              "target": "We have some time before class.",
+              "zh": "我们上课前还有一些时间。"
+            },
+            {
+              "target": "Do you have any spare paper?",
+              "zh": "你有多余的纸吗？"
+            },
+            {
+              "target": "I do not have any questions now.",
+              "zh": "我现在没有任何问题。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-010",
+          "knowledge_point": "should与should not：提出建议",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "should后接动词原形，表示建议或认为应该怎样做，语气通常比命令温和。不要将它与表达既定规则的have to混为一谈。",
+          "hint": "向同学提建议时，先想清楚建议的具体动作。",
+          "checklist": [
+            "should后是否使用动词原形？",
+            "建议是否符合交流对象和场合？"
+          ],
+          "examples": [
+            {
+              "target": "You should save a copy before editing.",
+              "zh": "你编辑前应该保存一个副本。"
+            },
+            {
+              "target": "I should ask for help earlier.",
+              "zh": "我应该早点寻求帮助。"
+            },
+            {
+              "target": "We should not leave all the work until Sunday.",
+              "zh": "我们不应该把所有工作都留到星期日。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-011",
+          "knowledge_point": "have to与do not have to：义务和不必",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "have to表示需要遵守的要求，第三人称单数使用has to。do not have to表示没有必要，不表示禁止；禁止的意思不能用它代替。",
+          "hint": "特别检查“不必”和“不准”有没有混淆。",
+          "checklist": [
+            "have或has是否与主语一致？",
+            "否定句是否表达“不必”而不是“禁止”？"
+          ],
+          "examples": [
+            {
+              "target": "We have to bring our student cards.",
+              "zh": "我们必须带学生证。"
+            },
+            {
+              "target": "She has to submit the form today.",
+              "zh": "她必须今天提交这张表格。"
+            },
+            {
+              "target": "You do not have to print every slide.",
+              "zh": "你不必打印每一张幻灯片。"
+            }
+          ]
+        },
+        {
+          "id": "en-a2-012",
+          "knowledge_point": "want、need与plan后的to不定式",
+          "reference": "系统原创·英语基础与校园沟通",
+          "explanation": "want、need和plan等动词后面常用to加动词原形，说明想做、需要做或计划做的事情。注意need to do与名词need的用法不同。",
+          "hint": "检查两个动词之间是否需要to。",
+          "checklist": [
+            "to后是否使用了动词原形？",
+            "想做、需要做和计划做的含义是否准确？"
+          ],
+          "examples": [
+            {
+              "target": "I want to improve my speaking.",
+              "zh": "我想提高口语。"
+            },
+            {
+              "target": "We need to check the deadline.",
+              "zh": "我们需要核对截止日期。"
+            },
+            {
+              "target": "They plan to practise together.",
+              "zh": "他们计划一起练习。"
+            }
+          ]
+        }
+      ]
+    },
+    "B1": {
+      "label": "B1 · 沟通起步（建议试学）",
+      "notice": "已通过大学英语四级可先从这一组试学，再按实际听说写表现调整；四级成绩不直接等同CEFR等级。重点是礼貌提问和说明学习情况。",
+      "points": [
+        {
+          "id": "en-b1-001",
+          "knowledge_point": "礼貌间接疑问句：陈述语序",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "在Could you tell me或Do you know后面嵌入疑问内容时，从句通常用陈述语序。yes/no类型的问题可用whether或if引导。",
+          "hint": "把直接问题Where is the office?改写时，检查office和is的位置。",
+          "checklist": [
+            "嵌入从句是否保持主语在谓语前？",
+            "整个句子作为请求时是否保留问号？"
+          ],
+          "examples": [
+            {
+              "target": "Could you tell me where your office is?",
+              "zh": "您能告诉我您的办公室在哪里吗？"
+            },
+            {
+              "target": "Do you know when the seminar starts?",
+              "zh": "你知道研讨课什么时候开始吗？"
+            },
+            {
+              "target": "Could you tell me whether we need to submit the code?",
+              "zh": "您能告诉我我们是否需要提交代码吗？"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-002",
+          "knowledge_point": "现在完成时：与现在有关的经历",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "用have或has加过去分词谈到现在为止的经历或已发生的结果。不要在同一分句中直接搭配yesterday等明确结束的过去时间。",
+          "hint": "强调“做过”或“已经”，而非某个已结束的具体时间。",
+          "checklist": [
+            "是否使用了正确的过去分词？",
+            "是否误与明确结束的过去时间直接连用？"
+          ],
+          "examples": [
+            {
+              "target": "I have tried this approach once.",
+              "zh": "我尝试过一次这个方法。"
+            },
+            {
+              "target": "She has already read the instructions.",
+              "zh": "她已经读过说明了。"
+            },
+            {
+              "target": "We have not discussed that question yet.",
+              "zh": "我们还没有讨论过那个问题。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-003",
+          "knowledge_point": "现在完成时与since、for",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "描述从过去持续到现在的情况，可用现在完成时。since后接起点，for后接一段时长；持续的情况要使用适合表达持续的动词。",
+          "hint": "先分清“从何时开始”和“持续了多久”。",
+          "checklist": [
+            "since后是起点、for后是时长吗？",
+            "动作或状态是否持续到现在？"
+          ],
+          "examples": [
+            {
+              "target": "I have studied here since September.",
+              "zh": "我从九月起就在这里学习。"
+            },
+            {
+              "target": "We have used this textbook for two months.",
+              "zh": "我们使用这本教材已经两个月了。"
+            },
+            {
+              "target": "I have known my study partner for six weeks.",
+              "zh": "我认识我的学习搭档已经六周了。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-004",
+          "knowledge_point": "第一条件句：真实的未来可能性",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "用if加一般现在时提出可能条件，主句常用will加动词原形说明未来结果。通常不在这个if条件从句里直接用will代替现在时。",
+          "hint": "if部分说条件，主句说条件满足后的结果。",
+          "checklist": [
+            "if从句是否用了合适的现在时？",
+            "主句的结果是否与条件逻辑相符？"
+          ],
+          "examples": [
+            {
+              "target": "If I finish the draft tonight, I will send it tomorrow.",
+              "zh": "如果我今晚完成初稿，我明天就会把它发出去。"
+            },
+            {
+              "target": "If the room is free, we will practise there.",
+              "zh": "如果房间空着，我们就会在那里练习。"
+            },
+            {
+              "target": "If you explain the first step, I will try the rest myself.",
+              "zh": "如果您解释第一步，我会自己尝试其余部分。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-005",
+          "knowledge_point": "第二条件句：假设现在或将来",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "用if加过去式和would加动词原形，表达与现实不同或不太可能的假设。这里的过去式主要表示假设距离，不是在叙述普通过去事件。",
+          "hint": "把“假如现在……”和真实将来可能性区分开。",
+          "checklist": [
+            "是否用过去式表达假设？",
+            "主句是否使用would加动词原形？"
+          ],
+          "examples": [
+            {
+              "target": "If I had more time, I would read the full paper.",
+              "zh": "如果我有更多时间，我会读完整篇论文。"
+            },
+            {
+              "target": "If the dataset were smaller, the test would run faster.",
+              "zh": "如果数据集更小，测试会运行得更快。"
+            },
+            {
+              "target": "If I were unsure about the rule, I would ask the tutor.",
+              "zh": "如果我不确定这条规则，我会询问导师。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-006",
+          "knowledge_point": "限定性定语从句：who、which与that",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "用定语从句说明具体是哪一个人或事物。who通常修饰人，which或that可以修饰事物；限定性从句一般不用逗号隔开。",
+          "hint": "先写被说明的名词，再补充能识别它的信息。",
+          "checklist": [
+            "关系词与修饰的名词是否相配？",
+            "是否误把限定性从句用逗号隔开？"
+          ],
+          "examples": [
+            {
+              "target": "The student who sits next to me studies robotics.",
+              "zh": "坐在我旁边的那位学生学机器人学。"
+            },
+            {
+              "target": "The file that you sent contains the examples.",
+              "zh": "您发送的那个文件包含这些例子。"
+            },
+            {
+              "target": "I need a book which explains the basic ideas clearly.",
+              "zh": "我需要一本把基本概念解释清楚的书。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-007",
+          "knowledge_point": "被动语态：be加过去分词",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "当重点是动作的对象或处理结果时，可用被动语态。be体现时态和主语数，后面的动词使用过去分词；不必总写动作执行者。",
+          "hint": "先想清楚句子的主语是执行动作，还是被处理的对象。",
+          "checklist": [
+            "be动词的时态和数正确吗？",
+            "是否使用过去分词而非过去式或ing形式？"
+          ],
+          "examples": [
+            {
+              "target": "The homework is checked every Friday.",
+              "zh": "作业每个星期五都会被检查。"
+            },
+            {
+              "target": "The classroom was changed this morning.",
+              "zh": "今天上午换了上课教室。"
+            },
+            {
+              "target": "Our questions were discussed after the presentation.",
+              "zh": "我们的问题在展示结束后得到了讨论。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-008",
+          "knowledge_point": "转述陈述句：said或told后的that从句",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "转述过去说过的话时，常用said that或told某人that。报道动词为过去时且采用过去视角时，从句时态常相应后移；told通常需要接听话的人。",
+          "hint": "said后不直接接人；told后通常要说明告诉了谁。",
+          "checklist": [
+            "said和told的结构是否正确？",
+            "从句时态是否与转述视角一致？"
+          ],
+          "examples": [
+            {
+              "target": "The tutor said that the room was available.",
+              "zh": "导师说那间房间当时可以使用。"
+            },
+            {
+              "target": "She told me that she needed more time.",
+              "zh": "她告诉我，她当时需要更多时间。"
+            },
+            {
+              "target": "He said that he would check the result.",
+              "zh": "他说他会核对这个结果。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-009",
+          "knowledge_point": "介词后的动名词：by、before与after",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "动词跟在介词后面时通常使用ing形式。可以用by说明方法，用before或after安排动作先后；注意有些to是介词而不是不定式标记。",
+          "hint": "本题先把介词后的动作改成ing形式。",
+          "checklist": [
+            "介词后的动词是否变为ing？",
+            "方法或先后顺序是否与中文一致？"
+          ],
+          "examples": [
+            {
+              "target": "I learned the terms by drawing simple diagrams.",
+              "zh": "我通过画简单的图来学习这些术语。"
+            },
+            {
+              "target": "Please check the units before comparing the results.",
+              "zh": "比较结果前，请先核对单位。"
+            },
+            {
+              "target": "We discussed the errors after running the test.",
+              "zh": "运行测试之后，我们讨论了这些错误。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-010",
+          "knowledge_point": "主语疑问句：who或what本身作主语",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "当who、what或which加名词直接询问主语时，一般不另加do或does。询问宾语时才按需要使用助动词。",
+          "hint": "先找出未知的是“谁做”，还是“做了什么”。",
+          "checklist": [
+            "疑问词本身是不是句子的主语？",
+            "是否多加了不需要的do或does？"
+          ],
+          "examples": [
+            {
+              "target": "Who teaches this course?",
+              "zh": "谁教这门课？"
+            },
+            {
+              "target": "What caused this error?",
+              "zh": "是什么导致了这个错误？"
+            },
+            {
+              "target": "Which method works best here?",
+              "zh": "哪种方法在这里最有效？"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-011",
+          "knowledge_point": "although与even though：让步关系",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "although或even though引导让步从句，表示尽管某种情况存在，另一种情况依然成立。标准英语通常不把although和but同时连接同一组分句。",
+          "hint": "表达“虽然……但是……”时，英文通常只保留一套连接结构。",
+          "checklist": [
+            "从句和主句是否构成真实的让步关系？",
+            "是否误写了although与but的重复连接？"
+          ],
+          "examples": [
+            {
+              "target": "Although the explanation was short, it answered my question.",
+              "zh": "虽然解释很简短，但它解答了我的问题。"
+            },
+            {
+              "target": "I attended the discussion even though I was nervous.",
+              "zh": "尽管我很紧张，我还是参加了讨论。"
+            },
+            {
+              "target": "Although I understood the example, I could not explain the rule.",
+              "zh": "虽然我理解了这个例子，但我无法解释这条规则。"
+            }
+          ]
+        },
+        {
+          "id": "en-b1-012",
+          "knowledge_point": "must、might与may：根据线索推测",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "must加动词原形可以表达有较强依据的推测；might或may表示不确定的可能性。它们不等于已经核实的事实，写作时要保留相应语气。",
+          "hint": "先判断依据强弱，不要把“可能”写成“肯定”。",
+          "checklist": [
+            "情态动词与确信程度是否相符？",
+            "情态动词后是否使用原形？"
+          ],
+          "examples": [
+            {
+              "target": "The lights are on, so someone must be inside.",
+              "zh": "灯亮着，所以里面肯定有人。"
+            },
+            {
+              "target": "This answer might be correct, but I need to check it.",
+              "zh": "这个答案可能是对的，但我需要核查。"
+            },
+            {
+              "target": "The tutor may be in a meeting now.",
+              "zh": "导师现在可能正在开会。"
+            }
+          ]
+        }
+      ]
+    },
+    "B2": {
+      "label": "B2 · 讨论与汇报",
+      "notice": "在基础表达较稳定后练习讨论、回顾过程、汇报问题和更复杂的句子。准确表达比堆砌复杂结构更重要。",
+      "points": [
+        {
+          "id": "en-b2-001",
+          "knowledge_point": "现在完成进行时：持续的活动",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "have或has been加动词ing强调从过去持续到现在或刚刚停止的活动过程。相比只强调结果的现在完成时，它更突出过程或持续时间。",
+          "hint": "先判断你想强调做了多久，还是已经完成了多少。",
+          "checklist": [
+            "是否保留have或has been？",
+            "动词是否用了ing形式并适合持续过程？"
+          ],
+          "examples": [
+            {
+              "target": "I have been practising this explanation for twenty minutes.",
+              "zh": "我练习这个解释已经二十分钟了。"
+            },
+            {
+              "target": "We have been collecting examples since Monday.",
+              "zh": "我们从星期一开始一直在收集例子。"
+            },
+            {
+              "target": "She has been working on the report all afternoon.",
+              "zh": "她整个下午一直在写这份报告。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-002",
+          "knowledge_point": "过去完成时：过去之前",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "had加过去分词表示某个过去时间或事件之前已经完成的动作。它需要清楚的过去参照点，不应无缘由地代替所有一般过去时。",
+          "hint": "先标出两个过去事件，辨认更早完成的是哪一个。",
+          "checklist": [
+            "是否存在明确的过去参照点？",
+            "更早完成的动作是否用了had加过去分词？"
+          ],
+          "examples": [
+            {
+              "target": "By the time I arrived, the meeting had started.",
+              "zh": "我到达时，会议已经开始了。"
+            },
+            {
+              "target": "I realised that I had attached the wrong file.",
+              "zh": "我意识到我之前附错了文件。"
+            },
+            {
+              "target": "We had checked the instructions before we began the experiment.",
+              "zh": "开始实验之前，我们已经核对过说明。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-003",
+          "knowledge_point": "过去完成进行时：过去参照点前的过程",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "had been加动词ing强调在某个过去事件之前持续了一段时间的活动，常解释当时的背景或原因。注意它并不直接说明活动已经完成。",
+          "hint": "把“当时之前一直在做”作为时间线的背景。",
+          "checklist": [
+            "是否有清楚的过去参照点？",
+            "是否在强调持续过程而非仅仅结果？"
+          ],
+          "examples": [
+            {
+              "target": "We had been testing the model for an hour when the server stopped.",
+              "zh": "服务器停止运行时，我们已经连续测试模型一个小时了。"
+            },
+            {
+              "target": "I was tired because I had been revising all morning.",
+              "zh": "我很累，因为我整个上午一直在复习。"
+            },
+            {
+              "target": "She had been waiting outside for ten minutes before the door opened.",
+              "zh": "门打开之前，她已经在外面等了十分钟。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-004",
+          "knowledge_point": "第三条件句：与过去事实相反的假设",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "用if加had和过去分词提出过去未实现的条件，主句用would have加过去分词表达本来可能出现的结果。",
+          "hint": "把条件和结果都放回已经结束的过去。",
+          "checklist": [
+            "if从句是否使用had加过去分词？",
+            "主句是否使用would have加过去分词？"
+          ],
+          "examples": [
+            {
+              "target": "If I had saved a backup, I would not have lost my notes.",
+              "zh": "如果我当时保存了备份，就不会丢失笔记了。"
+            },
+            {
+              "target": "If we had read the instructions, we would have avoided that mistake.",
+              "zh": "如果我们当时读了说明，就会避免那个错误。"
+            },
+            {
+              "target": "If she had seen the message, she would have joined the discussion.",
+              "zh": "如果她当时看到了消息，就会参加那次讨论。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-005",
+          "knowledge_point": "wish加过去式：对现在的遗憾",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "wish后的过去式可表达对当前情况的遗憾或不现实的愿望。对现在表达遗憾时，不能只因为看到过去式就译成过去事件。",
+          "hint": "明确愿望针对的是现在，而不是已经结束的过去。",
+          "checklist": [
+            "wish后的形式是否体现假设？",
+            "中文是否保留了当前遗憾的含义？"
+          ],
+          "examples": [
+            {
+              "target": "I wish I had more time to prepare.",
+              "zh": "我真希望自己现在有更多准备时间。"
+            },
+            {
+              "target": "I wish I understood this part more clearly.",
+              "zh": "我真希望自己现在能把这一部分理解得更清楚。"
+            },
+            {
+              "target": "We wish the classroom were closer to the library.",
+              "zh": "我们真希望教室离图书馆更近一些。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-006",
+          "knowledge_point": "情态动词加have done：回看过去",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "should have表示本该做却未做，might have表示对过去的不确定推测，could have可以表示过去本来有可能做到。后面都用过去分词。",
+          "hint": "先判断是在遗憾、推测，还是谈过去没有实现的可能。",
+          "checklist": [
+            "是否写成情态动词加have加过去分词？",
+            "中文是否区分本该、可能和本可以？"
+          ],
+          "examples": [
+            {
+              "target": "I should have checked the deadline earlier.",
+              "zh": "我本该更早核对截止日期。"
+            },
+            {
+              "target": "The message might have gone to your spam folder.",
+              "zh": "这封消息可能进了您的垃圾邮件文件夹。"
+            },
+            {
+              "target": "We could have finished sooner with a clearer plan.",
+              "zh": "如果计划更清楚，我们本可以更早完成。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-007",
+          "knowledge_point": "非限定性定语从句：补充信息与逗号",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "非限定性定语从句提供额外说明，通常用逗号隔开，修饰人用who，修饰事物用which；这种从句通常不使用that。",
+          "hint": "删去从句后，主句仍应能识别所谈对象。",
+          "checklist": [
+            "补充说明是否用逗号隔开？",
+            "是否误用了that引导非限定性从句？"
+          ],
+          "examples": [
+            {
+              "target": "Professor Chen, who teaches our seminar, gave me useful feedback.",
+              "zh": "陈教授是我们研讨课的任课老师，给了我有用的反馈。"
+            },
+            {
+              "target": "The new guide, which arrived yesterday, includes a glossary.",
+              "zh": "这份新指南包含术语表，它是昨天送达的。"
+            },
+            {
+              "target": "Our lab partner, who speaks Korean, helped us find the room.",
+              "zh": "我们的实验搭档会说韩语，并帮我们找到了房间。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-008",
+          "knowledge_point": "分词短语作名词后置修饰语",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "现在分词可说明名词正在进行的动作，过去分词可说明名词受到的处理。它们可以简化某些定语从句，但要保留正确的主动或被动关系。",
+          "hint": "先把短语还原为who或which引导的从句检查含义。",
+          "checklist": [
+            "ing和过去分词是否体现正确的主动或被动关系？",
+            "分词短语是否紧靠所修饰的名词？"
+          ],
+          "examples": [
+            {
+              "target": "The file attached to this message contains my draft.",
+              "zh": "这条消息所附的文件包含我的初稿。"
+            },
+            {
+              "target": "Students working on the same topic can share their questions.",
+              "zh": "研究同一主题的学生可以分享他们的问题。"
+            },
+            {
+              "target": "The examples shown on the slide are easier to follow.",
+              "zh": "幻灯片上展示的例子更容易理解。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-009",
+          "knowledge_point": "despite与in spite of后接名词或ing",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "despite和in spite of都是介词结构，后面通常接名词、代词或ing短语，不能直接像although一样接一个普通完整分句。",
+          "hint": "需要完整分句时改用although；使用despite时检查后面的形式。",
+          "checklist": [
+            "介词后是否接名词或ing短语？",
+            "是否误写了despite后直接接主语加谓语？"
+          ],
+          "examples": [
+            {
+              "target": "Despite the delay, we completed the discussion.",
+              "zh": "尽管有所延误，我们还是完成了讨论。"
+            },
+            {
+              "target": "In spite of the small sample, the report describes the observations clearly.",
+              "zh": "尽管样本很小，这份报告还是清楚地描述了观察结果。"
+            },
+            {
+              "target": "Despite practising several times, I still felt nervous.",
+              "zh": "尽管练习了好几次，我仍然感到紧张。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-010",
+          "knowledge_point": "provided that与unless：条件限制",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "provided that表示只要或条件是，unless表示除非。讨论可行条件时要把限制写清楚，尤其不要误把unless再叠加否定而改变意思。",
+          "hint": "把unless改想成“如果不”，再检查逻辑是否一致。",
+          "checklist": [
+            "是否准确区分条件满足与条件不满足？",
+            "是否误用了会改变意思的双重否定？"
+          ],
+          "examples": [
+            {
+              "target": "We can compare the results provided that the units are the same.",
+              "zh": "只要单位相同，我们就可以比较这些结果。"
+            },
+            {
+              "target": "I will use the smaller room unless it is already booked.",
+              "zh": "除非小房间已经被预订，否则我会使用它。"
+            },
+            {
+              "target": "You may revise the draft provided that you keep the original file.",
+              "zh": "只要保留原始文件，你就可以修改初稿。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-011",
+          "knowledge_point": "have或get something done：请别人处理",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "have或get加事物加过去分词可以表达安排别人完成某项处理。它通常不表示主语亲自完成该动作，要注意翻译中的执行者。",
+          "hint": "检查中文是否表达了“请人处理”或“让某物得到处理”。",
+          "checklist": [
+            "结构是否包含事物和过去分词？",
+            "是否误译成主语亲自执行了这个动作？"
+          ],
+          "examples": [
+            {
+              "target": "I had my laptop repaired before the presentation.",
+              "zh": "展示前，我请人修好了我的笔记本电脑。"
+            },
+            {
+              "target": "We got the poster printed at the campus shop.",
+              "zh": "我们在校园店请人打印了海报。"
+            },
+            {
+              "target": "She is having her student card replaced.",
+              "zh": "她正在请人更换她的学生证。"
+            }
+          ]
+        },
+        {
+          "id": "en-b2-012",
+          "knowledge_point": "报道类被动结构：is reported或is considered",
+          "reference": "系统原创·英语语法与教授沟通",
+          "explanation": "学术或正式表达中可用is reported to或is considered to等结构转述评价与报道。转述不等于亲自核实，应说明来源，避免把他人的判断写成无条件事实。",
+          "hint": "原句若是在报道看法，翻译时保留“据报道”或“被认为”。",
+          "checklist": [
+            "是否使用正确的被动结构？",
+            "是否保留了报道或评价的来源性质？"
+          ],
+          "examples": [
+            {
+              "target": "The method is considered to be suitable for small samples.",
+              "zh": "这个方法被认为适用于小样本。"
+            },
+            {
+              "target": "The new tool is reported to reduce preparation time.",
+              "zh": "据报道，这款新工具能够缩短准备时间。"
+            },
+            {
+              "target": "It is believed that further testing is necessary.",
+              "zh": "人们认为有必要进行进一步测试。"
+            }
+          ]
+        }
+      ]
+    },
+    "C1": {
+      "label": "C1 · 学术表达（选修）",
+      "notice": "学术写作与研究讨论的选修扩展。无需为了日常与教授沟通先学完本级；标签不代表学习者已经达到或必须达到C1。",
+      "points": [
+        {
+          "id": "en-c1-001",
+          "knowledge_point": "否定或限制性成分前置后的倒装",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "never、under no circumstances等否定成分或only加状语置于句首时，主句常把助动词、be或情态动词放在主语前。语序变化用于强调，不宜在普通交流中过度使用。",
+          "hint": "把主句还原为普通陈述语序，再检查倒装位置。",
+          "checklist": [
+            "句首成分是否确实触发倒装？",
+            "助动词、情态动词与主语位置是否正确？"
+          ],
+          "examples": [
+            {
+              "target": "Only after checking the labels did we notice the mismatch.",
+              "zh": "检查标签之后，我们才发现不一致。"
+            },
+            {
+              "target": "Never before have I presented this result to such a large group.",
+              "zh": "我以前从未向这么大的一群人汇报过这个结果。"
+            },
+            {
+              "target": "Under no circumstances should the original data be deleted.",
+              "zh": "在任何情况下都不应该删除原始数据。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-002",
+          "knowledge_point": "混合条件句：过去条件与现在结果",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "混合条件句可以用if加过去完成时描述未实现的过去条件，再用would加动词原形或进行式描述现在仍受影响的结果。要用时间线判断，不要机械套用同一种时态。",
+          "hint": "先明确条件属于过去，结果是不是现在。",
+          "checklist": [
+            "条件和结果是否处于不同时间？",
+            "过去条件与当前结果的关系是否合理？"
+          ],
+          "examples": [
+            {
+              "target": "If I had understood the question yesterday, I would be less confused now.",
+              "zh": "如果我昨天理解了这个问题，现在就不会这么困惑。"
+            },
+            {
+              "target": "If we had chosen the smaller dataset, we would be using less memory now.",
+              "zh": "如果我们当时选择了较小的数据集，现在占用的内存就会更少。"
+            },
+            {
+              "target": "If I had kept clearer notes, I would know which step to repeat now.",
+              "zh": "如果我当时记的笔记更清楚，现在就会知道该重复哪一步。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-003",
+          "knowledge_point": "强调句与what引导的分裂结构",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "It is或was加被强调部分再加that，以及What从句加be，都能突出句子的焦点。强调应服务于澄清关键信息，不能随意改变原句的因果或范围。",
+          "hint": "先确定需要突出的究竟是原因、需求还是结果特征。",
+          "checklist": [
+            "被强调的信息是否清楚？",
+            "what从句在整个句子中是否结构完整？"
+          ],
+          "examples": [
+            {
+              "target": "What I need most is an example with actual numbers.",
+              "zh": "我最需要的是一个带具体数字的例子。"
+            },
+            {
+              "target": "It was the change in units that caused the confusion.",
+              "zh": "正是单位的变化造成了误解。"
+            },
+            {
+              "target": "What makes this result interesting is its consistency across the tests.",
+              "zh": "这个结果有趣之处在于它在各次测试中保持一致。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-004",
+          "knowledge_point": "名词化：把动作组织为学术论述主题",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "名词化可把动作或过程写成名词短语，便于作为主语讨论，例如comparison和interpretation。使用时应保留明确的对象，避免只为显得正式而堆砌抽象名词。",
+          "hint": "找出核心动作，再判断名词化是否使论述更清楚。",
+          "checklist": [
+            "名词化后的对象和含义是否明确？",
+            "是否因抽象名词过多而丢失了执行者或逻辑？"
+          ],
+          "examples": [
+            {
+              "target": "The removal of duplicate rows improved the clarity of the table.",
+              "zh": "删除重复行使表格更清晰。"
+            },
+            {
+              "target": "A careful comparison of the two drafts revealed a missing assumption.",
+              "zh": "对两份初稿的仔细比较揭示了一个遗漏的假设。"
+            },
+            {
+              "target": "The interpretation of this pattern requires further evidence.",
+              "zh": "对这种模式的解释需要进一步的证据。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-005",
+          "knowledge_point": "学术保留表达：区分证据与结论强度",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "学术表达可以用appear to、suggest、may等形式限定结论强度，说明观察支持某种解释而非证明全部情况。保留语气应与实际证据相符，不是给每个句子机械加可能。",
+          "hint": "检查结论是否超出了句子给出的证据范围。",
+          "checklist": [
+            "是否保留了初步、似乎或可能等限定？",
+            "是否把支持某解释误写成已经完全证明？"
+          ],
+          "examples": [
+            {
+              "target": "These preliminary observations may indicate a change in behaviour.",
+              "zh": "这些初步观察可能表明行为发生了变化。"
+            },
+            {
+              "target": "The findings appear to support the simpler explanation.",
+              "zh": "这些发现似乎支持那个更简单的解释。"
+            },
+            {
+              "target": "This pattern suggests that additional testing would be useful.",
+              "zh": "这种模式提示，进行额外测试可能会有帮助。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-006",
+          "knowledge_point": "形容词加as或though的让步结构",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "形容词或分词短语可前置，再接as或though引导让步从句，例如Limited as the evidence is。此类结构较正式，主要用于强调两部分之间的让步关系。",
+          "hint": "可先改写为Although从句，确认含义和主语一致。",
+          "checklist": [
+            "前置成分是否能说明从句主语的性质？",
+            "主句与从句是否构成让步而非因果？"
+          ],
+          "examples": [
+            {
+              "target": "Useful as this summary is, it omits several important limitations.",
+              "zh": "这份摘要虽然有用，却遗漏了几项重要的局限。"
+            },
+            {
+              "target": "Limited as the evidence is, it provides a starting point for discussion.",
+              "zh": "尽管证据有限，它仍为讨论提供了一个起点。"
+            },
+            {
+              "target": "Clear though the diagram looks, the process still needs a spoken explanation.",
+              "zh": "这张图虽然看起来清楚，但这个流程仍需要口头解释。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-007",
+          "knowledge_point": "形式主语it：把较长内容后置",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "为了让句子开头更易处理，可以用it作形式主语，把真正讨论的to不定式、that从句或whether从句放在后面。此处it通常不指代一个具体物体。",
+          "hint": "先识别句中it是否只是占位，而不是译成某个“它”。",
+          "checklist": [
+            "真正讨论的内容是否在后置结构中？",
+            "中文是否避免了生硬多余的“它”？"
+          ],
+          "examples": [
+            {
+              "target": "It is difficult to isolate the effect of one variable.",
+              "zh": "很难单独确定一个变量的影响。"
+            },
+            {
+              "target": "It remains uncertain whether the change will persist.",
+              "zh": "这个变化是否会持续仍不确定。"
+            },
+            {
+              "target": "It is unlikely that one example will explain every case.",
+              "zh": "一个例子不太可能解释所有情况。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-008",
+          "knowledge_point": "建议或要求后的虚拟语气：that加动词原形",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "正式英语中，recommend、request等后的that从句可用动词原形；be也保持原形而不随主语变化。英式英语也常用should加原形；本组采用原形结构。",
+          "hint": "不要因为从句主语是单数，就在这种结构里加s或改成is。",
+          "checklist": [
+            "从句是否属于建议、要求或必要性的结构？",
+            "原形动词或be是否正确保留？"
+          ],
+          "examples": [
+            {
+              "target": "I recommend that the values be checked before submission.",
+              "zh": "我建议在提交前核对这些数值。"
+            },
+            {
+              "target": "The supervisor requested that each student submit a short summary.",
+              "zh": "导师要求每名学生提交一份简短摘要。"
+            },
+            {
+              "target": "It is essential that the source be identified accurately.",
+              "zh": "准确注明来源至关重要。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-009",
+          "knowledge_point": "完成分词结构：Having done的先后关系",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "Having加过去分词可表示先于主句动作完成的活动。分词结构的逻辑主语通常应与主句主语一致，避免出现看似由无关事物执行动作的悬垂结构。",
+          "hint": "检查究竟是谁先完成了前一个动作。",
+          "checklist": [
+            "分词结构与主句是否有相同的逻辑主语？",
+            "前一个动作是否确实先完成？"
+          ],
+          "examples": [
+            {
+              "target": "Having reviewed the feedback, I revised the introduction.",
+              "zh": "审阅反馈之后，我修改了引言。"
+            },
+            {
+              "target": "Having checked both versions, we kept the clearer example.",
+              "zh": "核对两个版本后，我们保留了更清楚的那个例子。"
+            },
+            {
+              "target": "Having finished the analysis, she prepared a short presentation.",
+              "zh": "完成分析后，她准备了一份简短汇报。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-010",
+          "knowledge_point": "省略if的条件倒装：Had、Were与Should",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "正式表达可省略if，把had、were或should放在主语前形成条件从句。Had常用于过去反事实，Were用于假设，Should可表示较客气的未来可能条件。",
+          "hint": "先还原成if从句，确认时间和假设性质。",
+          "checklist": [
+            "倒装前后是否保持相同条件含义？",
+            "主句时态是否与条件所处时间一致？"
+          ],
+          "examples": [
+            {
+              "target": "Had I known about the change, I would have revised the plan.",
+              "zh": "如果我当时知道这个变化，就会修改计划。"
+            },
+            {
+              "target": "Were the instructions clearer, fewer students would need clarification.",
+              "zh": "如果说明更清晰，需要进一步解释的学生就会更少。"
+            },
+            {
+              "target": "Should you need the raw figures, I can include them in an appendix.",
+              "zh": "如果您需要原始数值，我可以把它们放在附录中。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-011",
+          "knowledge_point": "the加比较级：两个变化的关联",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "the more等比较结构可把两个同步变化联系起来。两部分都需要合适的比较形式，并应表达合理关联，不能仅靠这个句式宣称已经证明了因果关系。",
+          "hint": "分别找到两部分中增加、减少或变强的量。",
+          "checklist": [
+            "两部分是否都用了比较结构？",
+            "是否区分表达关联与证明因果？"
+          ],
+          "examples": [
+            {
+              "target": "The more carefully we label the data, the easier the comparison becomes.",
+              "zh": "我们给数据标注得越仔细，比较就越容易。"
+            },
+            {
+              "target": "The less time I spend guessing, the more time I have for practice.",
+              "zh": "我花在猜测上的时间越少，就越有时间练习。"
+            },
+            {
+              "target": "The clearer the question is, the more specific the feedback can be.",
+              "zh": "问题越清楚，反馈就越能具体而有针对性。"
+            }
+          ]
+        },
+        {
+          "id": "en-c1-012",
+          "knowledge_point": "介词加which：限定范围、依据和条件",
+          "reference": "系统原创·学术英语与研究讨论",
+          "explanation": "正式写作中可以把介词放在which前，如under which或on which，精确说明条件、依据或关系。选择介词要由实际搭配决定，不能把任何介词任意放到which前。",
+          "hint": "先还原成普通句，确认原本需要哪个介词。",
+          "checklist": [
+            "介词是否符合conditions、assumptions等词的搭配？",
+            "从句修饰的名词是否明确？"
+          ],
+          "examples": [
+            {
+              "target": "We need to define the conditions under which the method is reliable.",
+              "zh": "我们需要界定这个方法在何种条件下是可靠的。"
+            },
+            {
+              "target": "The assumptions on which the argument rests should be stated explicitly.",
+              "zh": "这项论证所依据的假设应该明确说明。"
+            },
+            {
+              "target": "I am unsure about the extent to which this conclusion applies to our case.",
+              "zh": "我不确定这个结论在多大程度上适用于我们的情况。"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+

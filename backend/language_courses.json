@@ -1,0 +1,781 @@
+{
+  "version": 1,
+  "courses": [
+    {
+      "key": "english-system-b2",
+      "title": "英语主线 · B2听说读写提高",
+      "category": "english",
+      "source": "supplement",
+      "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2",
+      "description": "【英语系统主课｜B2】\n优先级：P0。\n定位：基于官方完整分级资源目录自编学习路线，不是官方单一学期课或认证。\n适合你的起点：你已过四级，可用B1各技能一单元查薄弱项，B2作为适当拔高的主线；四级分数不直接等于CEFR定级。B1明显吃力时回到对应基础点，B2材料已熟练可继续学术英语。不要求先刷完全部B1再学B2。\n学习顺序：口语5单元 → 听力12单元 → 阅读12单元 → 写作12单元。口语、听力有视频/音频，阅读与写作为图文和练习，按课时逐项打钩。\n学习方法：先听/读、不看原文做练习；再核对原文；最后用自己的话复述和写一个问题。口语练习先跟读，再脱稿表达。\n教授沟通重点：B1先练自我介绍、求助、追问与确认；B2重点学 Dealing with a problem、A lecture about an experiment、An email to your professor。给教授的邮件可以先学，不用等刷完整级。\n当前学到：完整41单元；完成教授邮件、课堂摘要和3分钟项目汇报等自编应用练习后转向真实专业课材料。\n达标自测：连续3份未预习的B2听力或阅读材料，理解练习约80%且能区分观点、依据与结论；能做3分钟“目标—尝试—结果—困难—下一步”汇报并回应追问；能独立写150–200词结构明确的邮件或短报告。此为自检建议，不保证听懂所有教授语速与口音。\n访问说明：已核实官方公开单元页面可读。加入的是免费资源；收藏、评论等账号功能可能要求免费登录。页面中的直播班、私人辅导等另付费服务不在本路线内。尚未在用户电脑实际播放全部媒体，不保证所有播放器均可访问。\n每天安排：学习时间与任务由你自己决定，不自动添加每日任务；每次约20–30分钟只是建议，不是媒体时长。",
+      "lessons": [
+        {
+          "id": "en-c47ceb34aee9d084c0188c91",
+          "title": "01 · Dealing with a problem",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2/dealing-problem",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-715cea2cbe8046b867985d6e",
+          "title": "02 · Giving advice",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2/giving-advice",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-3cc0754d861b20991f1165c8",
+          "title": "03 · Discussing advantages and disadvantages",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2/discussing-advantages-disadvantages",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-4b653231fdafb27e5b246a92",
+          "title": "04 · Challenging someone's ideas",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2/challenging-someones-ideas",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-49fe5b1fcc52c73e96ee3e75",
+          "title": "05 · Persuading someone to do something",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2/persuading-someone-do-something",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-338fe08457257b9113d86763",
+          "title": "06 · A lecture about an experiment",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/lecture-about-experiment",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-648873e4839d3bf2656222d9",
+          "title": "07 · A design presentation",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/design-presentation",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-2cd737fcfcb94acbe624e79b",
+          "title": "08 · Creating a study group",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/creating-study-group",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-0eeca0783cd82b48c63d81bf",
+          "title": "09 · Getting advice",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/getting-advice",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-eb99f3f80f3ac547b795380c",
+          "title": "10 · A talk about motivation",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/talk-about-motivation",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-e5ffb6aed136292379736401",
+          "title": "11 · A business interview",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/business-interview",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-db1bcb00710dfc74c19c36c2",
+          "title": "12 · Business news",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/business-news",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-050b1c8dd8503cc3fab6fbb2",
+          "title": "13 · A digital detox podcast",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/digital-detox-podcast",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-6e7c3e3a40f4c7bc2414d6d6",
+          "title": "14 · Office party planning",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/office-party-planning",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-13b51f99bc59266f5a0ad719",
+          "title": "15 · Talking about rumours",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/talking-about-rumours",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-14ca80fba7c176b7b867c022",
+          "title": "16 · Joining a gym",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/joining-gym",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-25e10029100521ec27979521",
+          "title": "17 · Film reviews",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/film-reviews",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-dc027f8ea1462bbba9fb8cd4",
+          "title": "18 · Asteroids",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/asteroids",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-0ed56559bfd99686028cfae7",
+          "title": "19 · Why bridges collapse",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/why-bridges-collapse",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-075c2a7be666f3795310e845",
+          "title": "20 · Cultural expectations and leadership",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/cultural-expectations-leadership",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-53504d0626d2a92823e1ff53",
+          "title": "21 · Millennials in the workplace",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/millennials-workplace",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-5261d78f7d6306d14a3e994f",
+          "title": "22 · The sharing economy",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/sharing-economy",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-cbf3f04465623bf11e91c5b1",
+          "title": "23 · Work–life balance",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/work-life-balance",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-c759fd282a0a7fa508b5ff18",
+          "title": "24 · Instant messages",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/instant-messages",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-6d18a8ca1c66d04d1c63af14",
+          "title": "25 · An email from a friend",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/email-friend",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-9209f97d200ab8583036fc3f",
+          "title": "26 · The Buy Nothing movement",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/buy-nothing-movement",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-017360a80b341aab6aad6d74",
+          "title": "27 · A Plastic Ocean: a film review",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/plastic-ocean-film-review",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-118ebddaf2a615503c4e9b72",
+          "title": "28 · Star Wars and the hero myth",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/star-wars-hero-myth",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-1a96136010c92f492c7555e7",
+          "title": "29 · A short story extract",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b2/short-story-extract",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-f2acf2a9824f009daae9c0c7",
+          "title": "30 · An email to your professor",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/email-your-professor",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-d5606a25a598e5f72038ef88",
+          "title": "31 · Giving instructions by email",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/giving-instructions-email",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-2c50d59b952c3c21aa74349f",
+          "title": "32 · A summary of a line graph",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/summary-line-graph",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-ec350fb39cfd53178f947018",
+          "title": "33 · Comparing two charts",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/comparing-two-charts",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-2bc7c9c0ea6204518825edea",
+          "title": "34 · A report on working abroad",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/report-working-abroad",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-8f730df748575f2a5d774813",
+          "title": "35 · An opinion essay",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/opinion-essay",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-4391276c6e403099224aa531",
+          "title": "36 · A covering email",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/covering-email",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-f14f79b4e4def22d762b9f23",
+          "title": "37 · A CV",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/cv",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-0f10324cc2717b6ac8c10d4a",
+          "title": "38 · An email to request time off",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/email-request-time",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-6a214f9f5b06e19c2d915943",
+          "title": "39 · A letter of complaint",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/letter-complaint",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-948438ed7046b0ceebb2b1c7",
+          "title": "40 · An informal email to a friend",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/informal-email-friend",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-3ff3384e103b35d4dde3d226",
+          "title": "41 · An advert",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b2/advert",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        }
+      ]
+    },
+    {
+      "key": "english-system-b1",
+      "title": "英语查漏补缺 · B1完整分级资源",
+      "category": "english",
+      "source": "supplement",
+      "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b1",
+      "description": "【英语系统主课｜B1】\n优先级：P1。\n定位：基于官方完整分级资源目录自编学习路线，不是官方单一学期课或认证。\n适合你的起点：你已过四级，可用B1各技能一单元查薄弱项，B2作为适当拔高的主线；四级分数不直接等于CEFR定级。B1明显吃力时回到对应基础点，B2材料已熟练可继续学术英语。不要求先刷完全部B1再学B2。\n学习顺序：口语5单元 → 听力12单元 → 阅读13单元 → 写作12单元。口语、听力有视频/音频，阅读与写作为图文和练习，按课时逐项打钩。\n学习方法：先听/读、不看原文做练习；再核对原文；最后用自己的话复述和写一个问题。口语练习先跟读，再脱稿表达。\n教授沟通重点：B1先练自我介绍、求助、追问与确认；B2重点学 Dealing with a problem、A lecture about an experiment、An email to your professor。给教授的邮件可以先学，不用等刷完整级。\n当前学到：B1保留完整42单元供查漏补缺；先各试一节听说读写，仅补薄弱部分，会的内容通过输出自测后跳过，不要求先刷完整级。\n达标自测：连续3份未预习的B1听力或阅读材料，理解练习约80%且能概括3要点；可脱稿讲2分钟并提出/澄清具体问题；能独立写120–150词条理清楚的学习或求助短文。此为自检建议，不是CEFR认证。\n访问说明：已核实官方公开单元页面可读。加入的是免费资源；收藏、评论等账号功能可能要求免费登录。页面中的直播班、私人辅导等另付费服务不在本路线内。尚未在用户电脑实际播放全部媒体，不保证所有播放器均可访问。\n每天安排：学习时间与任务由你自己决定，不自动添加每日任务；每次约20–30分钟只是建议，不是媒体时长。",
+      "lessons": [
+        {
+          "id": "en-882bc212700cf13a2ed7a740",
+          "title": "01 · Meeting face-to-face",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b1/meeting-face-face",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-dcab36e33c3434d2e1c88f9c",
+          "title": "02 · Asking a favour",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b1/asking-favour",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-76553a0fe03fcf7e12fddd80",
+          "title": "03 · Keeping a conversation going",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b1/keeping-conversation-going",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-110f200e17f8da0bafb9f0ce",
+          "title": "04 · Agreeing and disagreeing",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b1/agreeing-disagreeing",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-9d0fc8767c88662fccc64ef4",
+          "title": "05 · Responding to news",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b1/responding-news",
+          "section": "口语",
+          "format": "视频",
+          "trackable": true
+        },
+        {
+          "id": "en-42488ff54b6868e316461b36",
+          "title": "06 · An introduction to a lecture",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/introduction-lecture",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-11f6ecce82b7f78b09c82f79",
+          "title": "07 · A student discussion",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/student-discussion",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-065d29fc4ed809725ed660e8",
+          "title": "08 · Arriving late to class",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/arriving-late-class",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-d106cb7e6d666eba15712a2c",
+          "title": "09 · An interview about listening skills",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/interview-about-listening-skills",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-ee80b2dd5969b3a203fb5475",
+          "title": "10 · A team meeting about diversity",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/team-meeting-about-diversity",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-9b0b250d22ef858219f79584",
+          "title": "11 · Making a decision",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/making-decision",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-6bdfc42e9b82f8d903a9824f",
+          "title": "12 · A phone call from a customer",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/phone-call-customer",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-5f83751d3b44549f3d60d84b",
+          "title": "13 · Meeting an old friend",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/meeting-old-friend",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-c5d5b78c660d91681f52aa8e",
+          "title": "14 · Work–life balance",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/work-life-balance",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-dd1f278a7465f85c11a7c39a",
+          "title": "15 · A weather forecast",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/weather-forecast",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-97295dc5d5d7a53e8d127f85",
+          "title": "16 · At the chemist",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/chemist",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-5577a54350424e46b6ab82d2",
+          "title": "17 · Chatting about a series",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b1/chatting-about-series",
+          "section": "听力",
+          "format": "音频",
+          "trackable": true
+        },
+        {
+          "id": "en-3326b43c3b5343735ca08398",
+          "title": "18 · An email request for help",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/email-request-help",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-0ea81e8f8de4bd7bd9cffda7",
+          "title": "19 · A conference programme",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/conference-programme",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-8e589f35502fa9bc00345041",
+          "title": "20 · Robot teachers",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/robot-teachers",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-6840bd93dad1c978ec248c7f",
+          "title": "21 · Digital habits across generations",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/digital-habits-across-generations",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-59b2cfe74df8b7427ae57e68",
+          "title": "22 · Innovation in business",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/innovation-business",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-fa7089b83fa03a4343c9ab09",
+          "title": "23 · Planning an event",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/planning-event",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-ae22694b6e81d78f15aec299",
+          "title": "24 · How to spot fake news",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/how-spot-fake-news",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-dcf99828f30fbdf63b8b0bef",
+          "title": "25 · Encyclopedia entry",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/encyclopedia-entry",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-e0326f4a79d00e2571169865",
+          "title": "26 · Social media influencers",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/social-media-influencers",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-22b7d75635cdd043b3a5954f",
+          "title": "27 · A travel guide",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/travel-guide",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-2aef3b2bc9e349d25ca90105",
+          "title": "28 · A flyer for a gym",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/flyer-gym",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-d1cbc01016bb830f8bf97dad",
+          "title": "29 · The Martian: a book review",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/martian-book-review",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-4d7702fa85e16493e4a49b2d",
+          "title": "30 · The legend of fairies",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/reading/b1/legend-fairies",
+          "section": "阅读",
+          "format": "图文",
+          "trackable": true
+        },
+        {
+          "id": "en-09774468c22e9747cd16f69a",
+          "title": "31 · A class forum",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/class-forum",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-35ed51e92620a9db644ab134",
+          "title": "32 · A professional profile",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/professional-profile",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-e9ebe0ec43a2b703e9658da5",
+          "title": "33 · A report on a student meeting",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/report-student-meeting",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-c6597fffb2aefc7ec9e1800f",
+          "title": "34 · A thank-you message",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/thank-you-message",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-948ee3e197cd7a6ff1edc9c8",
+          "title": "35 · An email to explain an accommodation problem",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/email-explain-accommodation-problem",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-80f3a4a1c8e9ad39210ceb0c",
+          "title": "36 · Describing charts",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/describing-charts",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-581868d59016bdd4a55fcb0d",
+          "title": "37 · Describing a bar chart",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/describing-bar-chart",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-9ceccc5524f24862e1c69929",
+          "title": "38 · Reflective writing",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/reflective-writing",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-2e176b7162605ead60b5d9de",
+          "title": "39 · An email to invite someone to a job interview",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/email-invite-someone-job-interview",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-429430cb6013535a9fc0a0c2",
+          "title": "40 · An email giving holiday advice",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/email-giving-holiday-advice",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-21cefda5640a393a3f2bdbe5",
+          "title": "41 · A restaurant review",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/restaurant-review",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        },
+        {
+          "id": "en-5cd303e573bb4491abfd9f59",
+          "title": "42 · New Year's resolutions",
+          "url": "https://learnenglish.britishcouncil.org/free-resources/writing/b1/new-years-resolutions",
+          "section": "写作",
+          "format": "写作练习",
+          "trackable": true
+        }
+      ]
+    },
+    {
+      "key": "english-academic-openlearn",
+      "title": "英语学术系统课 · English: skills for learning",
+      "category": "english",
+      "source": "supplement",
+      "url": "https://www.open.edu/openlearn/education-development/english-skills-learning/",
+      "description": "【英语学术读写衔接】\n优先级：P1。需要阅读专业材料、整理笔记或写报告时按模块衔接；B2为语言主线，时间与进度由你自己选择。\n课程来源：The Open University · OpenLearn 官方完整课程。\n学习定位：补足大学学习中的读学术文本、笔记、改写/摘要、引用、作业结构、学术词汇与句子组织，与B1/B2一般语言练习重点不同。\n学时：官方给出8周、平均每周约3小时；可自行调整，不自动生成每日计划。这里按8个完整周章节跟踪，并非仅8个短视频。\n当前学到：完成8周章节及相应练习；用自己的一段专业课材料产出读书笔记、注明来源的摘要和一页结构化短报告。\n达标自测：能区分引用、改写、摘要，保留出处；把专业课短文整理成可复述的笔记；按目标—依据—结论写清楚一页报告。徽章条件以OpenLearn官方测验要求为准。\n访问说明：课程内容可不注册直接开始；免费注册登录后可保存平台进度、访问全部测验/活动并按要求取得免费参与证明或徽章。不是付费学位课程，也不是语言等级证书。\n级别说明：OpenLearn的Level 1: Introductory是本课程自身难度标识，不应误标为CEFR A1。\n每天学什么由你选择，不生成每日计划。",
+      "lessons": [
+        {
+          "id": "en-fee73603e663d3f9cf6363e2",
+          "title": "Week 1 · Reading skills for university study",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19202",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-f224442ed6ffcf66adb5e65e",
+          "title": "Week 2 · Using ideas and information from your readings in your writing",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19251",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-7ac84ab5a6f10802b0e8d17e",
+          "title": "Week 3 · Writing university assignments",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19203",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-b80caac5f65075981c0f349c",
+          "title": "Week 4 · Writing well-organised essays",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19245",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-a1f27cd5034d1cd012f7a92d",
+          "title": "Week 5 · Linking ideas",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19204",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-e600a65c3c07ce4727ec1a6e",
+          "title": "Week 6 · Understanding and using academic style",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19324",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-2ce817d5e7388fcfff65edb5",
+          "title": "Week 7 · Learning new specialised and academic vocabulary",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19205",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        },
+        {
+          "id": "en-f12afc36bdd32a65c97d52f5",
+          "title": "Week 8 · Structuring sentences and word groups",
+          "url": "https://www.open.edu/openlearn/mod/oucontent/view.php?id=19325",
+          "section": "学术英语",
+          "format": "综合章节",
+          "trackable": true
+        }
+      ]
+    },
+    {
+      "key": "korean-chongya",
+      "title": "冲鸭网校 · 韩语课程入口",
+      "category": "korean",
+      "source": "user",
+      "url": "https://kt.chongyaedu.com/PC/#/",
+      "lessons": [],
+      "description": "【你提供的韩语课堂】\n按你要求仅导入入口，课程、顺序和每天任务由你自己安排。\n点击“打开课程”在原网校登录并选择自己的韩语课程，已有账号与课程权限以原平台为准。平台目录、视频和站内学习记录没有搬运或自动同步；这里不编造已购买的课时。\n每日语法复习与中韩翻译位于本系统下方独立练习区，与原平台播放进度分开保存。"
+    },
+    {
+      "key": "korean-hanyuup",
+      "title": "语思笔智 · 韩语学习与练习入口",
+      "category": "korean",
+      "source": "user",
+      "url": "https://hanyuup.com/",
+      "lessons": [],
+      "description": "【你提供的韩语学习网站】\n按你要求导入，学习内容和每天安排由你自己选择。\n公开首页提供词库、TOPIK真题和看韩剧学韩语等入口；这里按原网站入口保存，不把它误标为已经导入的完整视频课程。\n原网站登录、课程权限与价格以对方页面为准，不自动注册、购买或订阅。站内学习记录不自动导入本系统。"
+    }
+  ]
+}
