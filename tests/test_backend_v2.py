@@ -48,13 +48,37 @@ class BackendTests(unittest.TestCase):
 
     def state(self):return self.req('/state')[1]
 
+    def assert_default_courses(self):
+        courses=self.state()['courses']
+        self.assertEqual(len(courses),8)
+        ai=[course for course in courses if course['category']=='ai']
+        self.assertEqual(len(ai),3)
+        self.assertEqual({(course['title'],course['url']) for course in ai},{
+            ('Python 中文教程','https://docs.python.org/zh-cn/3/tutorial/'),
+            ('scikit-learn 入门指南','https://scikit-learn.org/stable/getting_started.html'),
+            ('动手学深度学习','https://zh.d2l.ai/')})
+        self.assertTrue(all(course['curriculum_key'] is None for course in ai))
+        self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='english'},
+            {'english-system-b2','english-system-b1','english-academic-openlearn'})
+        self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='korean'},
+            {'korean-chongya','korean-hanyuup'})
+        self.assertEqual({course['category'] for course in courses},{'ai','english','korean'})
+        recommended=[course for course in courses if course['category'] in ('ai','english')]
+        self.assertEqual(len(recommended),6)
+        self.assertEqual({course['source_label'] for course in recommended},{'补充推荐'})
+        self.assertEqual({course['source'] for course in recommended},{'supplement'})
+        korean=[course for course in courses if course['category']=='korean']
+        self.assertEqual(len(korean),2)
+        self.assertEqual({course['source_label'] for course in korean},{'我的课程'})
+        self.assertEqual({course['source'] for course in korean},{'user'})
+        return courses
+
     def test_health_manual_signup_defaults_once(self):
         self.assertEqual(self.req('/health')[1],{'app':'zhixu-planner','version':'2'})
         self.assertEqual(self.state()['tasks'],[])
-        self.assertEqual(len(self.state()['courses']),3)
-        self.assertEqual({c['source_label'] for c in self.state()['courses']},{'补充推荐'})
+        original_ids={course['id'] for course in self.assert_default_courses()}
         app.init();app.init()
-        self.assertEqual(len(self.state()['courses']),3)
+        self.assertEqual({course['id'] for course in self.assert_default_courses()},original_ids)
         self.assertEqual(self.req('/template','POST',{'start':'2026-11-01'})[0],410)
         self.assertEqual(self.state()['tasks'],[])
 
@@ -73,7 +97,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(self.req(f'/courses/{cid}','DELETE')[0],200)
         self.assertFalse(any(c['id']==cid for c in self.state()['courses']))
         app.init()
-        self.assertEqual(len(self.state()['courses']),3)
+        self.assert_default_courses()
 
     def test_invalid_course_urls(self):
         for url in ['javascript:alert(1)','file:///C:/secret','https://','https://user:pass@example.com','https://example.com/has space']:
