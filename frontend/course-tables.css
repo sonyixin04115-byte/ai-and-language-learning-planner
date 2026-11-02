@@ -61,3 +61,15 @@
 
 .language-practice button:disabled{cursor:default}
 @media(min-width:901px){aside nav{max-height:calc(100vh - 290px);overflow-y:auto}}
+
+/* Instruction language is explicit; an authored guide is separate from the source lesson. */
+.course-language{display:block;width:fit-content;max-width:100%;box-sizing:border-box;margin-top:7px;padding:3px 7px;border:1px solid #dce3dd;border-radius:4px;background:#f6f8f4;color:#617164;font-size:11px;font-weight:500;line-height:1.8;white-space:normal;overflow-wrap:anywhere}
+.course-language.chinese-instruction{background:#e9f3e5;border-color:#bfd3b7;color:#2d6543}
+.lesson-table-panel>.course-language{margin:0 0 16px}
+.lesson-title-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
+.lesson-original-title{display:block;margin-top:7px;color:#718073;font-size:11px;font-weight:400;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+.lesson-chinese-guide{max-width:100%;min-width:0;margin-top:12px;font-size:12px;font-weight:400;line-height:1.9;white-space:normal;overflow-wrap:anywhere}
+.lesson-chinese-guide summary{cursor:pointer;color:#32694b;font-weight:600;border-radius:3px;white-space:normal;overflow-wrap:anywhere}
+.lesson-chinese-guide summary:focus-visible{outline:2px solid #739c80;outline-offset:4px}
+.lesson-guide-origin{display:block;margin:10px 0 7px;color:#758273;font-size:11px;line-height:1.8;white-space:normal;overflow-wrap:anywhere}
+.lesson-guide-content{padding:12px;background:#eff5e9;border-left:3px solid #91ab89;border-radius:0 5px 5px 0;color:#3c5843;font-size:13px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
