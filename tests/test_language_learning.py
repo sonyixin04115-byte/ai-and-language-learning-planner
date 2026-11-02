@@ -30,6 +30,7 @@ class LanguageLearningTests(unittest.TestCase):
         self.write('language_courses.json', {'courses': [
             {'key': 'language-test-english', 'category': 'english', 'title': 'English test course',
              'url': 'https://example.com/english', 'description': 'Original curriculum fixture.',
+             'instruction_language': '中文讲解', 'learning_role': 'main',
              'lessons': [{'id': 'external-audio', 'title': 'Listen', 'section': 'Listening', 'format': '音频', 'url': 'https://example.com/audio'},
                          {'id': 'external-reading', 'title': 'Read', 'section': 'Reading', 'format': '图文', 'url': 'https://example.com/reading'}]},
             {'key': 'language-test-korean', 'category': 'korean', 'title': 'Korean portal',
@@ -156,9 +157,12 @@ class LanguageLearningTests(unittest.TestCase):
     def test_external_audio_and_reading_progress_is_validated_and_owned(self):
         courses = self.req('/state')[1]['courses']
         english = next(item for item in courses if item['category']=='english')
+        self.assertEqual((english['instruction_language'], english['learning_role']), ('中文讲解', 'main'))
         self.assertEqual((english['lesson_count'], english['trackable_count'], english['video_count']), (2, 2, 0))
         status, content = self.req(f"/courses/{english['id']}/lessons")
         self.assertEqual(status, 200, content)
+        self.assertEqual((content['course']['instruction_language'], content['course']['learning_role']),
+                         ('中文讲解', 'main'))
         self.assertTrue(all(item['kind']=='external' and item['trackable'] for item in content['lessons']))
         for lesson in content['lessons']:
             url = f"/courses/{english['id']}/lessons/{lesson['id']}"
@@ -179,6 +183,148 @@ class LanguageLearningTests(unittest.TestCase):
             row = c.execute('SELECT * FROM courses WHERE id=?', (english['id'],)).fetchone()
             self.assertEqual((row['title'], row['description'], row['archived']), ('My edited title','My notes',1))
             self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1').fetchone()[0], 2)
+
+    def upgraded_catalog(self):
+        catalog = json.loads((self.resources / 'language_courses.json').read_text(encoding='utf-8'))
+        course = catalog['courses'][0]
+        old = {field: course.get(field, 'supplement' if field=='source' else '')
+               for field in ('title', 'url', 'description', 'source', 'category')}
+        new = {'title': 'Updated Chinese-led course', 'url': 'https://example.com/updated-english',
+               'description': 'Updated factory guidance.', 'source': 'user', 'category': 'korean'}
+        course.update(new, previous_defaults=[old], instruction_language='英文原声，配中文导学', learning_role='practice')
+        self.write('language_courses.json', catalog)
+        return old, new
+
+    def test_known_defaults_migrate_in_place_and_preserve_completed_lessons_and_ownership(self):
+        english = next(item for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        cid = english['id']
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/external-audio', 'PATCH', {'done':True})[0], 200)
+        with app.conn() as c:
+            learning.seed_courses(c, 2)
+            other_before = dict(c.execute('SELECT * FROM courses WHERE user_id=2 AND curriculum_key=?',
+                                          ('language-test-english',)).fetchone())
+            progress_before = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+        old, new = self.upgraded_catalog()
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+            changes = c.total_changes
+            learning.seed_courses(c, 1)
+            self.assertEqual(c.total_changes, changes, 'A second seed must not perform a metadata write')
+            self.assertEqual(dict(c.execute('SELECT * FROM courses WHERE user_id=2 AND curriculum_key=?',
+                                           ('language-test-english',)).fetchone()), other_before)
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], progress_before)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1').fetchone()[0], 2)
+        refreshed = next(item for item in self.req('/state')[1]['courses'] if item['id']==cid)
+        for field, value in new.items():
+            self.assertEqual(refreshed[field], value, field)
+        self.assertEqual((refreshed['curriculum_key'], refreshed['completed_count']), ('language-test-english', 1))
+        self.assertEqual((refreshed['instruction_language'], refreshed['learning_role']),
+                         ('英文原声，配中文导学', 'practice'))
+        status, content = self.req(f'/courses/{cid}/lessons')
+        self.assertEqual(status, 200, content)
+        self.assertEqual([(row['id'], row['done']) for row in content['lessons']],
+                         [('external-audio', True), ('external-reading', False)])
+
+    def test_default_migration_preserves_each_custom_field_independently(self):
+        cid = next(item['id'] for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        old, new = self.upgraded_catalog()
+        custom = {'title': 'My custom course', 'url': 'https://example.com/my-own-resource',
+                  'description': 'My personal learning notes', 'source': 'supplement', 'category': 'ai'}
+        # The old source is supplement: use a distinct custom value and change
+        # the catalogue's old/new source around it, so this also tests source.
+        source_catalog = json.loads((self.resources / 'language_courses.json').read_text(encoding='utf-8'))
+        for field in old:
+            with self.subTest(field=field):
+                current_old = dict(old)
+                current_new = dict(new)
+                if field == 'source':
+                    current_old['source'] = 'user'
+                    current_new['source'] = 'supplement'
+                course = source_catalog['courses'][0]
+                course.update(current_new, previous_defaults=[current_old])
+                self.write('language_courses.json', source_catalog)
+                with app.conn() as c:
+                    c.execute('UPDATE courses SET '+','.join(name+'=?' for name in current_old)+' WHERE id=?',
+                              tuple(current_old.values())+(cid,))
+                self.assertEqual(self.req(f'/courses/{cid}', 'PATCH', {field:custom[field]})[0], 200)
+                with app.conn() as c:
+                    learning.seed_courses(c, 1)
+                actual = next(item for item in self.req('/state')[1]['courses'] if item['id']==cid)
+                self.assertEqual(actual[field], custom[field])
+                for untouched in current_new.keys()-{field}:
+                    self.assertEqual(actual[untouched], current_new[untouched], untouched)
+
+    def test_known_default_migration_keeps_archived_course_and_all_learner_edits(self):
+        cid = next(item['id'] for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        self.req(f'/courses/{cid}/lessons/external-audio', 'PATCH', {'done':True})
+        self.req(f'/courses/{cid}', 'PATCH', {'title':'My edited title', 'description':'My own notes'})
+        self.assertEqual(self.req(f'/courses/{cid}', 'DELETE')[0], 200)
+        old, new = self.upgraded_catalog()
+        with app.conn() as c:
+            before = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+            learning.seed_courses(c, 1)
+            learning.seed_courses(c, 1)
+            row = c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone()
+            self.assertEqual((row['title'], row['description'], row['archived']),
+                             ('My edited title', 'My own notes', 1))
+            self.assertEqual(row['url'], new['url'])
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], before)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1').fetchone()[0], 2)
+        self.assertNotIn(cid, [item['id'] for item in self.req('/state')[1]['courses']])
+        self.assertEqual(self.req(f'/courses/{cid}/lessons')[0], 404)
+
+    def test_course_changes_without_known_previous_defaults_do_not_replace_saved_metadata(self):
+        original = next(item for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        catalog = json.loads((self.resources / 'language_courses.json').read_text(encoding='utf-8'))
+        catalog['courses'][0].update(title='New factory title', description='New factory description')
+        self.write('language_courses.json', catalog)
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+        saved = next(item for item in self.req('/state')[1]['courses'] if item['id']==original['id'])
+        self.assertEqual((saved['title'], saved['description']), (original['title'], original['description']))
+
+    def test_startup_migration_repeats_without_losing_course_identity_or_done_state(self):
+        cid = next(item['id'] for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/external-audio', 'PATCH', {'done':True})[0], 200)
+        old, new = self.upgraded_catalog()
+        app.init()
+        app.init()
+        status, state = self.req('/state')
+        self.assertEqual(status, 200, state)
+        migrated = next(item for item in state['courses'] if item['id']==cid)
+        self.assertEqual((migrated['title'], migrated['completed_count']), (new['title'], 1))
+        self.assertEqual(sum(item['curriculum_key']=='language-test-english' for item in state['courses']), 1)
+        content = self.req(f'/courses/{cid}/lessons')[1]
+        self.assertEqual(content['lessons'][0]['id'], 'external-audio')
+        self.assertTrue(content['lessons'][0]['done'])
+
+    def test_chinese_guides_merge_by_stable_id_without_changing_original_resource_or_progress(self):
+        cid = next(item['id'] for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        status, before = self.req(f'/courses/{cid}/lessons')
+        self.assertEqual(status, 200, before)
+        self.req(f'/courses/{cid}/lessons/external-audio', 'PATCH', {'done':True})
+        self.write('english_lesson_guides.json', {
+            'version': 1, 'notice': 'Original Chinese study guidance.',
+            'lessons': {'external-audio': {'zh_title':'听力课题', 'zh_guide':'先听大意，再核对原文并复述。',
+                                          'id':'must-not-change', 'url':'https://example.com/must-not-replace'},
+                        'unknown-id': {'zh_title':'Unrelated', 'zh_guide':'Never add a new lesson.'}},
+        })
+        status, after = self.req(f'/courses/{cid}/lessons')
+        self.assertEqual(status, 200, after)
+        self.assertEqual(len(after['lessons']), 2)
+        for old, updated in zip(before['lessons'], after['lessons']):
+            self.assertEqual((old['id'], old['url'], old['title']),
+                             (updated['id'], updated['url'], updated['title']))
+        audio, reading = after['lessons']
+        self.assertEqual((audio['zh_title'], audio['zh_guide'], audio['done']),
+                         ('听力课题', '先听大意，再核对原文并复述。', True))
+        self.assertNotIn('zh_title', reading)
+        self.assertEqual(after['course']['completed_count'], 1)
+        self.write('english_lesson_guides.json', {'version':1, 'lessons':{
+            'external-audio': {'zh_title':'更新后的中文课题', 'zh_guide':'更新后的中文导学。'}}})
+        refreshed = self.req(f'/courses/{cid}/lessons')[1]['lessons'][0]
+        self.assertEqual((refreshed['zh_title'], refreshed['zh_guide'], refreshed['done']),
+                         ('更新后的中文课题', '更新后的中文导学。', True))
 
     def test_manual_courses_keep_a_valid_independent_category(self):
         status, result = self.req('/courses', 'POST', {'title':'My English', 'category':'english'})
@@ -221,16 +367,34 @@ class PublishedLanguageContentTests(unittest.TestCase):
 
     def test_complete_english_routes_and_two_user_korean_portals_are_not_duplicated(self):
         courses = learning.course_catalog()
-        self.assertEqual(len(courses), 5)
-        self.assertEqual(sum(course['category']=='english' for course in courses), 3)
+        self.assertEqual(len(courses), 8)
+        self.assertEqual(sum(course['category']=='english' for course in courses), 6)
         self.assertEqual(sum(course['category']=='korean' for course in courses), 2)
-        self.assertEqual(len({course['key'] for course in courses}), 5)
+        self.assertEqual(len({course['key'] for course in courses}), 8)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 91)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 91)
-        self.assertEqual(len({lesson['url'] for lesson in units}), 91)
-        for lesson in units:
-            self.assertTrue(lesson['url'].startswith(('https://learnenglish.britishcouncil.org/', 'https://www.open.edu/')))
+        self.assertEqual(len(units), 173)
+        self.assertEqual(len({lesson['id'] for lesson in units}), 173)
+        original = [course for course in courses if course.get('learning_role') in ('practice', 'reference')]
+        original_units = [lesson for course in original for lesson in course['lessons']]
+        self.assertEqual(len(original_units), 91)
+        self.assertEqual(len({lesson['url'] for lesson in original_units}), 91)
+        self.assertTrue(all(lesson['url'].startswith(('https://learnenglish.britishcouncil.org/', 'https://www.open.edu/')) for lesson in original_units))
+        chinese = [course for course in courses if course.get('learning_role') in ('main', 'ielts')]
+        self.assertEqual(len(chinese), 3)
+        self.assertTrue(all(course['instruction_language']=='中文讲解' for course in chinese))
+        self.assertEqual(sorted(len(course['lessons']) for course in chinese), [20, 29, 33])
+        for course in chinese:
+            metadata = app.course_metadata({'curriculum_key':course['key']})
+            expected_videos = len(course['lessons']) if course['learning_role']=='main' else 0
+            self.assertEqual(metadata['video_count'], expected_videos)
+            self.assertEqual(metadata['unit_label'], '课题' if course['learning_role']=='ielts' else '节')
+        topics = [lesson for lesson in units if lesson.get('unit_type') == 'topic']
+        self.assertEqual(len(topics), 33)
+        self.assertEqual(len({lesson['module_key'] for lesson in topics}), 4)
+        self.assertTrue(all('目录课题' in lesson['format'] for lesson in topics))
+        guides = learning.read_json('english_lesson_guides.json')['lessons']
+        self.assertEqual(set(guides), {lesson['id'] for lesson in original_units})
+        self.assertTrue(all(value['zh_title'] and value['zh_guide'] for value in guides.values()))
         for course in courses:
             if course['category']=='korean':
                 self.assertEqual(course['lessons'], [])
