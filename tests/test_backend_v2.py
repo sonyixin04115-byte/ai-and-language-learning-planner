@@ -50,7 +50,7 @@ class BackendTests(unittest.TestCase):
 
     def assert_default_courses(self):
         courses=self.state()['courses']
-        self.assertEqual(len(courses),11)
+        self.assertEqual(len(courses),8)
         ai=[course for course in courses if course['category']=='ai']
         self.assertEqual(len(ai),3)
         self.assertEqual({(course['title'],course['url']) for course in ai},{
@@ -59,13 +59,12 @@ class BackendTests(unittest.TestCase):
             ('动手学深度学习','https://zh.d2l.ai/')})
         self.assertTrue(all(course['curriculum_key'] is None for course in ai))
         self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='english'},
-            {'english-system-b2','english-system-b1','english-academic-openlearn',
-             'english-zh-grammar-yingyutu','english-zh-phonetics-cug','english-zh-ielts-dut'})
+            {'english-system-b2','english-academic-openlearn','english-zh-ielts-dut'})
         self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='korean'},
             {'korean-chongya','korean-hanyuup'})
         self.assertEqual({course['category'] for course in courses},{'ai','english','korean'})
         recommended=[course for course in courses if course['category'] in ('ai','english')]
-        self.assertEqual(len(recommended),9)
+        self.assertEqual(len(recommended),6)
         self.assertEqual({course['source_label'] for course in recommended},{'补充推荐'})
         self.assertEqual({course['source'] for course in recommended},{'supplement'})
         korean=[course for course in courses if course['category']=='korean']

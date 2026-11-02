@@ -326,6 +326,75 @@ class LanguageLearningTests(unittest.TestCase):
         self.assertEqual((refreshed['zh_title'], refreshed['zh_guide'], refreshed['done']),
                          ('更新后的中文课题', '更新后的中文导学。', True))
 
+    def retire_fixture_english_course(self):
+        catalog = json.loads((self.resources / 'language_courses.json').read_text(encoding='utf-8'))
+        retired = catalog['courses'].pop(0)
+        catalog['retired_course_keys'] = [retired['key'], 'not-previously-seeded']
+        self.write('language_courses.json', catalog)
+        return retired
+
+    def test_retirement_hides_only_owned_system_bundle_and_preserves_notes_progress_and_manual_course(self):
+        english = next(item for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        cid = english['id']
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/external-audio', 'PATCH', {'done':True})[0], 200)
+        self.assertEqual(self.req(f'/courses/{cid}', 'PATCH',
+                                 {'title':'My revised bundle', 'description':'Keep my personal notes.'})[0], 200)
+        status, manual = self.req('/courses', 'POST', {
+            'title':english['title'], 'url':english['url'], 'category':'english',
+            'description':'My independently added same-name course.'})
+        self.assertEqual(status, 201, manual)
+        manual_id = manual['id']
+        with app.conn() as c:
+            learning.seed_courses(c, 2)
+            original = dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone())
+            manual_before = dict(c.execute('SELECT * FROM courses WHERE id=?', (manual_id,)).fetchone())
+            other_before = dict(c.execute('SELECT * FROM courses WHERE user_id=2 AND curriculum_key=?',
+                                          ('language-test-english',)).fetchone())
+            progress_before = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+        self.retire_fixture_english_course()
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+            self.assertEqual(dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone()),
+                             {**original, 'archived':1})
+            self.assertEqual(dict(c.execute('SELECT * FROM courses WHERE id=?', (manual_id,)).fetchone()), manual_before)
+            self.assertEqual(dict(c.execute('SELECT * FROM courses WHERE user_id=2 AND curriculum_key=?',
+                                           ('language-test-english',)).fetchone()), other_before)
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], progress_before)
+        visible = {item['id'] for item in self.req('/state')[1]['courses']}
+        self.assertNotIn(cid, visible)
+        self.assertIn(manual_id, visible)
+        self.assertEqual(self.req(f'/courses/{cid}/lessons')[0], 404)
+        self.assertIn(other_before['id'], {item['id'] for item in self.req('/state', token=self.other_token)[1]['courses']})
+
+    def test_retired_bundle_startup_is_idempotent_and_does_not_resurrect_archived_rows(self):
+        cid = next(item['id'] for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        self.req(f'/courses/{cid}/lessons/external-reading', 'PATCH', {'done':True})
+        self.retire_fixture_english_course()
+        with app.conn() as c:
+            learning.init(c)
+            original = dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone())
+            progress = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+            changes = c.total_changes
+            learning.init(c)
+            self.assertEqual(c.total_changes, changes)
+            self.assertEqual(dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone()), original)
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], progress)
+            self.assertEqual(original['archived'], 1)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1 AND curriculum_key=?',
+                                       ('language-test-english',)).fetchone()[0], 1)
+        self.assertNotIn(cid, {item['id'] for item in self.req('/state')[1]['courses']})
+
+    def test_new_account_does_not_seed_retired_bundle(self):
+        retired = self.retire_fixture_english_course()
+        status, result = self.req('/register', 'POST', {
+            'username':'retirement-fixture-new', 'password':'disposable-test-password', 'name':'Test'}, token=None)
+        self.assertEqual(status, 200, result)
+        with app.conn() as c:
+            uid = c.execute('SELECT id FROM users WHERE username=?', ('retirement-fixture-new',)).fetchone()['id']
+            rows = c.execute('SELECT curriculum_key,archived FROM courses WHERE user_id=?', (uid,)).fetchall()
+            self.assertTrue(any(row['curriculum_key']=='language-test-korean' for row in rows))
+            self.assertFalse(any(row['curriculum_key']==retired['key'] for row in rows))
+
     def test_manual_courses_keep_a_valid_independent_category(self):
         status, result = self.req('/courses', 'POST', {'title':'My English', 'category':'english'})
         self.assertEqual(status, 201, result)
@@ -367,27 +436,29 @@ class PublishedLanguageContentTests(unittest.TestCase):
 
     def test_complete_english_routes_and_two_user_korean_portals_are_not_duplicated(self):
         courses = learning.course_catalog()
-        self.assertEqual(len(courses), 8)
-        self.assertEqual(sum(course['category']=='english' for course in courses), 6)
+        self.assertEqual(len(courses), 5)
+        self.assertEqual(sum(course['category']=='english' for course in courses), 3)
         self.assertEqual(sum(course['category']=='korean' for course in courses), 2)
-        self.assertEqual(len({course['key'] for course in courses}), 8)
+        self.assertEqual(len({course['key'] for course in courses}), 5)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 173)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 173)
+        self.assertEqual(len(units), 82)
+        self.assertEqual(len({lesson['id'] for lesson in units}), 82)
         original = [course for course in courses if course.get('learning_role') in ('practice', 'reference')]
         original_units = [lesson for course in original for lesson in course['lessons']]
-        self.assertEqual(len(original_units), 91)
-        self.assertEqual(len({lesson['url'] for lesson in original_units}), 91)
+        self.assertEqual(len(original_units), 49)
+        self.assertEqual(len({lesson['url'] for lesson in original_units}), 49)
         self.assertTrue(all(lesson['url'].startswith(('https://learnenglish.britishcouncil.org/', 'https://www.open.edu/')) for lesson in original_units))
         chinese = [course for course in courses if course.get('learning_role') in ('main', 'ielts')]
-        self.assertEqual(len(chinese), 3)
+        self.assertEqual(len(chinese), 1)
         self.assertTrue(all(course['instruction_language']=='中文讲解' for course in chinese))
-        self.assertEqual(sorted(len(course['lessons']) for course in chinese), [20, 29, 33])
+        self.assertEqual(sorted(len(course['lessons']) for course in chinese), [33])
         for course in chinese:
             metadata = app.course_metadata({'curriculum_key':course['key']})
-            expected_videos = len(course['lessons']) if course['learning_role']=='main' else 0
-            self.assertEqual(metadata['video_count'], expected_videos)
-            self.assertEqual(metadata['unit_label'], '课题' if course['learning_role']=='ielts' else '节')
+            self.assertEqual(metadata['video_count'], 0)
+            self.assertEqual(metadata['unit_label'], '课题')
+        self.assertEqual(set(learning.read_json('language_courses.json')['retired_course_keys']),
+                         {'english-zh-phonetics-cug','english-zh-grammar-yingyutu','english-system-b1'})
+        self.assertTrue(all(course['key'] not in learning.read_json('language_courses.json')['retired_course_keys'] for course in courses))
         topics = [lesson for lesson in units if lesson.get('unit_type') == 'topic']
         self.assertEqual(len(topics), 33)
         self.assertEqual(len({lesson['module_key'] for lesson in topics}), 4)
