@@ -61,10 +61,27 @@ def init(c):
 
 
 def seed_courses(c, uid):
-    """Add each bundle once, preserving edits, archiving and lesson progress."""
+    """Seed bundles and refresh only field values from known old defaults."""
     for course in course_catalog():
         key = course['key']
-        if c.execute('SELECT 1 FROM courses WHERE user_id=? AND curriculum_key=?', (uid, key)).fetchone():
+        saved = c.execute('SELECT * FROM courses WHERE user_id=? AND curriculum_key=?', (uid, key)).fetchone()
+        if saved:
+            # A changed factory title must not prevent an untouched description
+            # from being refreshed, or overwrite a learner's own description.
+            # Never migrate identities, archive flags or lesson progress here.
+            updates = {}
+            previous = course.get('previous_defaults', [])
+            for field in ('title', 'url', 'description', 'source', 'category'):
+                current = course.get(field, 'supplement' if field == 'source' else '')
+                if saved[field] != current and any(
+                    isinstance(old, dict) and field in old and saved[field] == old[field]
+                    for old in previous
+                ):
+                    updates[field] = current
+            if updates:
+                c.execute('UPDATE courses SET ' + ','.join(field + '=?' for field in updates)
+                          + ' WHERE id=? AND user_id=?',
+                          tuple(updates.values()) + (saved['id'], uid))
             continue
         existing = c.execute('SELECT id FROM courses WHERE user_id=? AND url=? ORDER BY id LIMIT 1',
                              (uid, course['url'])).fetchone()
@@ -91,8 +108,20 @@ def external_lessons(course):
     entry = next((item for item in course_catalog() if item['key'] == key), None)
     if entry is None:
         return None
-    return [dict(item, kind='external', size=0, extension='', trackable=True)
-            for item in entry.get('lessons', [])]
+    guides = (read_json('english_lesson_guides.json').get('lessons', {})
+              if entry.get('category') == 'english' else {})
+    lessons = []
+    for item in entry.get('lessons', []):
+        lesson = dict(item, kind='external', size=0, extension='', trackable=True)
+        guide = guides.get(item['id'], {})
+        # Explanations supplement the original resource. Its stable identity,
+        # URL, title and recorded completion continue to refer to that resource.
+        for field in ('zh_title', 'zh_guide'):
+            value = guide.get(field)
+            if isinstance(value, str) and value.strip():
+                lesson[field] = value
+        lessons.append(lesson)
+    return lessons
 
 
 def trackable(lesson):

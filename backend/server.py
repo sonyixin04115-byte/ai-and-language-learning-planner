@@ -181,9 +181,15 @@ def course_lessons(course):
 def course_metadata(course):
     external = language_learning.external_lessons(course)
     if external is not None:
+        entry = next((item for item in language_learning.course_catalog()
+                      if item['key'] == course.get('curriculum_key')), {})
         return {'local_key':None,'is_local':False,'is_external':True,'lesson_count':len(external),
-                'video_count':sum(item.get('format')=='视频' for item in external),
-                'trackable_count':sum(language_learning.trackable(item) for item in external),'available':True}
+                'video_count':sum(item.get('unit_type')=='video' or item.get('format')=='视频' for item in external),
+                'trackable_count':sum(language_learning.trackable(item) for item in external),'available':True,
+                'instruction_language':entry.get('instruction_language', ''),
+                'learning_role':entry.get('learning_role', ''),
+                'unit_label':('课题' if external and all(item.get('unit_type')=='topic' for item in external)
+                              else '模块' if external and all(item.get('unit_type')=='module' for item in external) else '节')}
     metadata = materials.metadata(course)
     metadata['trackable_count'] = metadata['video_count']
     return metadata
