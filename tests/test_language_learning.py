@@ -49,6 +49,18 @@ class LanguageLearningTests(unittest.TestCase):
     def write(self, name, value):
         (self.resources / name).write_text(json.dumps(value, ensure_ascii=False), encoding='utf-8')
 
+    def video_fixture(self):
+        course = {
+            'key': 'ai-test-video', 'category': 'ai', 'title': 'AI introductory video fixture',
+            'url': 'https://example.com/ai-videos', 'description': 'A Chinese AI video course.',
+            'source': 'supplement', 'instruction_language': '中文讲解', 'learning_role': 'main',
+            'lessons': [{'id': f'ai-video-{i}', 'title': f'AI video {i}', 'section': 'AI introduction',
+                         'format': '视频', 'unit_type': 'video', 'url': f'https://example.com/ai-video-{i}'}
+                        for i in (1, 2)],
+        }
+        self.write('video_courses.json', {'version': 1, 'courses': [course]})
+        return course
+
     def daily(self, day='2026-11-02', direction='mixed', token='owner', language='english', level='B2'):
         status, result = self.req(f'/language-practice?language={language}&level={level}&day={day}&direction={direction}', token=token)
         self.assertEqual(status, 200, result)
@@ -183,6 +195,83 @@ class LanguageLearningTests(unittest.TestCase):
             row = c.execute('SELECT * FROM courses WHERE id=?', (english['id'],)).fetchone()
             self.assertEqual((row['title'], row['description'], row['archived']), ('My edited title','My notes',1))
             self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1').fetchone()[0], 2)
+
+    def test_video_bundle_startup_preserves_existing_course_identity_notes_archiving_and_progress(self):
+        self.assertFalse((self.resources / 'video_courses.json').exists())
+        self.assertEqual([course['key'] for course in learning.course_catalog()],
+                         ['language-test-english', 'language-test-korean'])
+        english = next(item for item in self.req('/state')[1]['courses'] if item['category']=='english')
+        self.assertEqual(self.req(f"/courses/{english['id']}/lessons/external-audio", 'PATCH', {'done':True})[0], 200)
+        with app.conn() as c:
+            language_rows = [dict(row) for row in c.execute(
+                'SELECT * FROM courses WHERE user_id=1 ORDER BY id')]
+        fixture = self.video_fixture()
+        app.init()
+        app.init()
+        courses = self.req('/state')[1]['courses']
+        video = next(item for item in courses if item['curriculum_key']==fixture['key'])
+        self.assertEqual(sum(item['curriculum_key']==fixture['key'] for item in courses), 1)
+        self.assertEqual(self.req(f"/courses/{video['id']}/lessons/ai-video-1", 'PATCH', {'done':True})[0], 200)
+        self.assertEqual(self.req(f"/courses/{video['id']}", 'PATCH',
+                                 {'title':'My AI title', 'description':'My AI learning notes'})[0], 200)
+        self.assertEqual(self.req(f"/courses/{video['id']}", 'DELETE')[0], 200)
+        with app.conn() as c:
+            saved_video = dict(c.execute('SELECT * FROM courses WHERE id=?', (video['id'],)).fetchone())
+            progress = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress ORDER BY course_id,lesson_id')]
+        app.init()
+        app.init()
+        with app.conn() as c:
+            self.assertEqual(dict(c.execute('SELECT * FROM courses WHERE id=?', (video['id'],)).fetchone()), saved_video)
+            self.assertEqual(saved_video['archived'], 1)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1 AND curriculum_key=?',
+                                       (fixture['key'],)).fetchone()[0], 1)
+            self.assertEqual([dict(c.execute('SELECT * FROM courses WHERE id=?', (row['id'],)).fetchone())
+                              for row in language_rows], language_rows)
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress ORDER BY course_id,lesson_id')], progress)
+        self.assertNotIn(video['id'], {item['id'] for item in self.req('/state')[1]['courses']})
+
+    def test_ai_external_video_lessons_and_completion_are_owned(self):
+        fixture = self.video_fixture()
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+        video = next(item for item in self.req('/state')[1]['courses'] if item['curriculum_key']==fixture['key'])
+        cid = video['id']
+        self.assertEqual((video['category'], video['instruction_language'], video['learning_role']),
+                         ('ai', '中文讲解', 'main'))
+        self.assertEqual((video['lesson_count'], video['trackable_count'], video['video_count']), (2, 2, 2))
+        status, content = self.req(f'/courses/{cid}/lessons')
+        self.assertEqual(status, 200, content)
+        self.assertEqual([item['id'] for item in content['lessons']], ['ai-video-1', 'ai-video-2'])
+        self.assertTrue(all(item['kind']=='external' and item['trackable'] and not item['done']
+                            for item in content['lessons']))
+        self.assertEqual(self.req(f'/courses/{cid}/lessons', token=self.other_token)[0], 404)
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/ai-video-1', 'PATCH', {'done':True}, token=self.other_token)[0], 404)
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/ai-video-1', 'PATCH', {'done':True}, token=None)[0], 401)
+        for _ in range(2):
+            status, result = self.req(f'/courses/{cid}/lessons/ai-video-1', 'PATCH', {'done':True})
+            self.assertEqual(status, 200, result)
+            self.assertEqual(result['completed_count'], 1)
+        reloaded = self.req(f'/courses/{cid}/lessons')[1]
+        self.assertEqual([item['done'] for item in reloaded['lessons']], [True, False])
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/unknown', 'PATCH', {'done':True})[0], 404)
+        status, cleared = self.req(f'/courses/{cid}/lessons/ai-video-1', 'PATCH', {'done':False})
+        self.assertEqual(status, 200, cleared)
+        self.assertEqual(cleared['completed_count'], 0)
+
+    def test_video_bundle_adopts_existing_url_without_duplicating_or_overwriting_personal_notes(self):
+        fixture = self.video_fixture()
+        status, manual = self.req('/courses', 'POST', {
+            'title':'My AI course', 'url':fixture['url'], 'category':'ai', 'description':'My personal notes'})
+        self.assertEqual(status, 201, manual)
+        cid = manual['id']
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+            learning.seed_courses(c, 1)
+            matches = c.execute('SELECT * FROM courses WHERE user_id=1 AND url=?', (fixture['url'],)).fetchall()
+            self.assertEqual(len(matches), 1)
+            self.assertEqual((matches[0]['id'], matches[0]['title'], matches[0]['description'], matches[0]['curriculum_key']),
+                             (cid, 'My AI course', 'My personal notes', fixture['key']))
+        self.assertEqual(self.req(f'/courses/{cid}/lessons')[0], 200)
 
     def upgraded_catalog(self):
         catalog = json.loads((self.resources / 'language_courses.json').read_text(encoding='utf-8'))
@@ -436,19 +525,20 @@ class PublishedLanguageContentTests(unittest.TestCase):
 
     def test_complete_english_routes_and_two_user_korean_portals_are_not_duplicated(self):
         courses = learning.course_catalog()
-        self.assertEqual(len(courses), 5)
+        self.assertEqual(len(courses), 6)
         self.assertEqual(sum(course['category']=='english' for course in courses), 3)
         self.assertEqual(sum(course['category']=='korean' for course in courses), 2)
-        self.assertEqual(len({course['key'] for course in courses}), 5)
+        self.assertEqual(sum(course['category']=='ai' for course in courses), 1)
+        self.assertEqual(len({course['key'] for course in courses}), 6)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 82)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 82)
+        self.assertEqual(len(units), 201)
+        self.assertEqual(len({lesson['id'] for lesson in units}), 201)
         original = [course for course in courses if course.get('learning_role') in ('practice', 'reference')]
         original_units = [lesson for course in original for lesson in course['lessons']]
         self.assertEqual(len(original_units), 49)
         self.assertEqual(len({lesson['url'] for lesson in original_units}), 49)
         self.assertTrue(all(lesson['url'].startswith(('https://learnenglish.britishcouncil.org/', 'https://www.open.edu/')) for lesson in original_units))
-        chinese = [course for course in courses if course.get('learning_role') in ('main', 'ielts')]
+        chinese = [course for course in courses if course['category']=='english' and course.get('learning_role') in ('main', 'ielts')]
         self.assertEqual(len(chinese), 1)
         self.assertTrue(all(course['instruction_language']=='中文讲解' for course in chinese))
         self.assertEqual(sorted(len(course['lessons']) for course in chinese), [33])
@@ -466,6 +556,12 @@ class PublishedLanguageContentTests(unittest.TestCase):
         guides = learning.read_json('english_lesson_guides.json')['lessons']
         self.assertEqual(set(guides), {lesson['id'] for lesson in original_units})
         self.assertTrue(all(value['zh_title'] and value['zh_guide'] for value in guides.values()))
+        ai = next(course for course in courses if course['category']=='ai')
+        self.assertEqual(ai['key'], 'ai-intro-xmu-video')
+        self.assertEqual(ai['instruction_language'], '中文讲解')
+        self.assertEqual(len(ai['lessons']), 119)
+        self.assertTrue(all(item['unit_type']=='video' and item['url'].startswith('https://www.bilibili.com/video/') for item in ai['lessons']))
+        self.assertEqual(len({item['url'] for item in ai['lessons']}), 119)
         for course in courses:
             if course['category']=='korean':
                 self.assertEqual(course['lessons'], [])
