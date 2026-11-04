@@ -73,3 +73,25 @@
 .lesson-chinese-guide summary:focus-visible{outline:2px solid #739c80;outline-offset:4px}
 .lesson-guide-origin{display:block;margin:10px 0 7px;color:#758273;font-size:11px;line-height:1.8;white-space:normal;overflow-wrap:anywhere}
 .lesson-guide-content{padding:12px;background:#eff5e9;border-left:3px solid #91ab89;border-radius:0 5px 5px 0;color:#3c5843;font-size:13px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Reference-based grading stays attached to the exact submitted answer. */
+.language-section-heading>.practice-heading-actions{display:flex;flex:0 1 auto;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px;max-width:100%;min-width:0}
+.practice-heading-actions button{max-width:100%;white-space:normal;overflow-wrap:anywhere;font-size:13px}
+.practice-grade-panel{margin-top:12px;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.8}
+.practice-grade-empty{display:block;color:#778577;line-height:1.8}
+.practice-grade-pending,.practice-grade-stale{margin:0;padding:9px 11px;border-radius:5px;background:#f6f1e5;color:#795f27;font-size:12px;line-height:1.8;overflow-wrap:anywhere}
+.practice-grade-result{box-sizing:border-box;max-width:100%;min-width:0;border:1px solid #d9e3d5;border-radius:7px;padding:11px 12px;background:#f1f7ee;color:#315d40;white-space:normal;overflow-wrap:anywhere}
+.practice-grade-result.is-incorrect{background:#fff3ec;border-color:#ead0c2;color:#88452f}
+.practice-grade-result.is-needs_review{background:#fbf6e9;border-color:#e5d9b9;color:#775e25}
+.practice-grade-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 9px;min-width:0}
+.practice-grade-heading strong{font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.practice-grade-heading small{font-size:10px;line-height:1.7;opacity:.8;overflow-wrap:anywhere}
+.practice-grade-result ul{margin:8px 0;padding-left:18px;line-height:1.8}
+.practice-grade-result li{margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.practice-grade-reference{margin-top:9px;max-width:100%;min-width:0}
+.practice-grade-reference summary{cursor:pointer;font-weight:600;overflow-wrap:anywhere;border-radius:3px}
+.practice-grade-reference summary:focus-visible{outline:2px solid #739c80;outline-offset:3px}
+.practice-grade-reference p{margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.8}
+.practice-grade-reference small,.practice-grade-time{display:block;font-size:10px;line-height:1.8;opacity:.85;overflow-wrap:anywhere}
+.practice-grade-time{margin-top:9px}
+@media(max-width:700px){.language-section-heading>.practice-heading-actions{flex:1 1 100%;justify-content:flex-start}.practice-heading-actions button{font-size:12px;padding:9px 11px}}
