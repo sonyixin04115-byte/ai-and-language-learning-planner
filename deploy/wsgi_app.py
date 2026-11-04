@@ -21,7 +21,7 @@ import time
 from urllib.parse import urlsplit, parse_qs
 
 PROJECT = Path(__file__).resolve().parent.parent
-STATIC_NAMES = {"index.html", "app.js", "style.css", "tables.css", "course-tables.css", "task-timer.js", "task-timer.css", "avatar.css"}
+STATIC_NAMES = {"index.html", "app.js", "style.css", "tables.css", "course-tables.css", "task-timer.js", "task-timer.css", "avatar.css", "listening.js", "listening.css"}
 LOCAL_API = "const API='http://127.0.0.1:8001/api';"
 CLOUD_API = "const API='/api';"
 
