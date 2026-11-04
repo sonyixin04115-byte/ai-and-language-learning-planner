@@ -29,7 +29,8 @@ def read_json(name):
 
 
 def course_catalog():
-    return read_json('language_courses.json').get('courses', [])
+    return (read_json('language_courses.json').get('courses', [])
+            + read_json('video_courses.json').get('courses', []))
 
 
 def init(c):
@@ -62,14 +63,13 @@ def init(c):
 
 def seed_courses(c, uid):
     """Seed bundles and refresh only field values from known old defaults."""
-    catalog = read_json('language_courses.json')
-    retired = set(catalog.get('retired_course_keys', []))
+    retired = set(read_json('language_courses.json').get('retired_course_keys', []))
     for key in retired:
         # A retired system bundle is hidden, never deleted. Keep its learner
         # notes and stable progress identities, including previously edited rows.
         c.execute('UPDATE courses SET archived=1 WHERE user_id=? AND curriculum_key=? AND archived=0',
                   (uid, key))
-    for course in catalog.get('courses', []):
+    for course in course_catalog():
         key = course['key']
         if key in retired:
             continue
