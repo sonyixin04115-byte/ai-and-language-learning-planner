@@ -1,5 +1,6 @@
 """Language questions, cross-device persistence and course progress use real HTTP."""
 from pathlib import Path
+from datetime import date, timedelta
 import json
 import sqlite3
 import unittest
@@ -77,6 +78,211 @@ class LanguageLearningTests(unittest.TestCase):
             'examples': [{'target': '저는 중국에서 왔어요.', 'zh': '我来自中国。'}],
         }]}}})
         return self.daily(day, direction, token, 'korean', '1')['items'][0]
+
+    def practice_rows(self):
+        with app.conn() as c:
+            return {table: [tuple(row) for row in c.execute('SELECT * FROM '+table+' ORDER BY rowid')]
+                    for table in ('language_answers', 'language_daily_sets', 'language_settings')}
+
+    def history(self, language='english', page=1, page_size=20, token='owner', extra=''):
+        status, result = self.req(f'/language-practice?mode=history&language={language}&page={page}&page_size={page_size}{extra}', token=token)
+        self.assertEqual(status, 200, result)
+        return result
+
+    def test_manual_judgment_is_separate_persistent_reversible_and_does_not_set_flags(self):
+        item = self.grading_item()
+        auto = self.req('/language-practice', 'PATCH', self.payload(item, answer='中国是我的家乡。', grade=True))[1]['item']
+        self.assertEqual(auto['grading']['status'], 'needs_review')
+        self.assertIsNone(auto['manual_review'])
+        status, result = self.req('/language-practice', 'PATCH', self.payload(item, manual_result='correct'))
+        self.assertEqual(status, 200, result)
+        saved = result['item']
+        self.assertEqual(saved['grading'], auto['grading'])
+        self.assertEqual((saved['manual_review']['status'], saved['manual_review']['label']), ('correct', '我判对'))
+        self.assertEqual(saved['manual_review']['reviewed_answer'], auto['answer'])
+        self.assertTrue(saved['manual_review']['reviewed_at'].endswith('Z'))
+        self.assertNotIn('reference_answer', saved['manual_review'])
+        self.assertFalse(saved['completed'] or saved['review'])
+        self.assertEqual(self.daily(direction='to_zh', language='korean', level='1')['items'][0], saved)
+        updated = self.req('/language-practice', 'PATCH', self.payload(item, completed=True, review=True))[1]['item']
+        self.assertEqual(updated['manual_review'], saved['manual_review'])
+        self.assertEqual(self.req('/language-practice/review?language=korean&level=1')[1]['items'][0], updated)
+        changed = self.req('/language-practice', 'PATCH', self.payload(item, manual_result='incorrect'))[1]['item']
+        self.assertEqual((changed['manual_review']['status'], changed['manual_review']['label']), ('incorrect', '我判错'))
+        for _ in range(2):
+            status, result = self.req('/language-practice', 'PATCH', self.payload(item, manual_result=None))
+            self.assertEqual(status, 200, result)
+            self.assertIsNone(result['item']['manual_review'])
+            self.assertEqual(result['item']['grading'], auto['grading'])
+            self.assertTrue(result['item']['completed'] and result['item']['review'])
+
+    def test_manual_judgment_requires_saved_current_graded_nonempty_answer_and_valid_payload(self):
+        item = self.grading_item()
+        for values in ({'manual_result': 'correct'}, {'manual_result': None},
+                       {'answer': '我来自中国', 'grade': True, 'manual_result': 'correct'}):
+            before = self.practice_rows()
+            status, error = self.req('/language-practice', 'PATCH', self.payload(item, **values))
+            self.assertEqual(status, 400, error)
+            self.assertEqual(self.practice_rows(), before)
+        self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国'))
+        for values in ({'manual_result': 'correct'}, {'grade': True, 'manual_result': 'correct'}):
+            before = self.practice_rows()
+            self.assertEqual(self.req('/language-practice', 'PATCH', self.payload(item, **values))[0], 400)
+            self.assertEqual(self.practice_rows(), before)
+        self.req('/language-practice', 'PATCH', self.payload(item, grade=True))
+        for values in ({'answer': '我来自中国。', 'manual_result': 'correct'},
+                       {'manual_result': True}, {'manual_result': 1}, {'manual_result': []},
+                       {'manual_result': 'needs_review'}, {'manual_review': {'status': 'correct'}},
+                       {'manual_result': 'correct', 'user_id': 2}, {'reference_answer': '伪造参考'}):
+            with self.subTest(values=values):
+                before = self.practice_rows()
+                self.assertEqual(self.req('/language-practice', 'PATCH', self.payload(item, **values))[0], 400)
+                self.assertEqual(self.practice_rows(), before)
+        self.req('/language-practice', 'PATCH', self.payload(item, answer='  \n '))
+        before = self.practice_rows()
+        self.assertEqual(self.req('/language-practice', 'PATCH', self.payload(item, manual_result='incorrect'))[0], 400)
+        self.assertEqual(self.practice_rows(), before)
+
+    def test_answer_edits_clear_both_judgments_and_same_answer_regrading_keeps_manual(self):
+        item = self.grading_item()
+        self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自韩国', grade=True))
+        saved = self.req('/language-practice', 'PATCH', self.payload(item, manual_result='correct'))[1]['item']
+        self.assertEqual(saved['grading']['status'], 'incorrect')
+        self.assertEqual(saved['manual_review']['status'], 'correct')
+        for values in ({'answer': '我来自韩国', 'review': True}, {'grade': True, 'completed': True}):
+            result = self.req('/language-practice', 'PATCH', self.payload(item, **values))[1]['item']
+            self.assertEqual(result['manual_review'], saved['manual_review'])
+        edited = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自韩国。'))[1]['item']
+        self.assertIsNone(edited['grading'])
+        self.assertIsNone(edited['manual_review'])
+        with app.conn() as c:
+            self.assertEqual(tuple(c.execute('SELECT grading,manual_review FROM language_answers WHERE user_id=1').fetchone()), ('', ''))
+        before = self.practice_rows()
+        self.assertEqual(self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自韩国', manual_result='incorrect'))[0], 400)
+        self.assertEqual(self.practice_rows(), before)
+
+    def test_manual_judgment_respects_frozen_question_account_date_level_and_mode(self):
+        item = self.grading_item(direction='mixed')
+        self.req('/language-practice', 'PATCH', self.payload(item, answer=item['model_answer'], grade=True, review=True))
+        saved = self.req('/language-practice', 'PATCH', self.payload(item, manual_result='correct'))[1]['item']
+        content = json.loads((self.resources/'language_korean.json').read_text(encoding='utf-8'))
+        content['levels']['2'] = content['levels']['1']
+        content['levels']['1']['points'][0]['examples'][0]['zh'] = '已更改的参考'
+        self.write('language_korean.json', content)
+        for override, token in (({}, self.other_token), ({'day':'2026-11-03'}, 'owner'),
+                                ({'level':'2'}, 'owner'), ({'direction':'to_target'}, 'owner')):
+            before = self.practice_rows()
+            status, error = self.req('/language-practice', 'PATCH', {**self.payload(item, manual_result='incorrect'), **override}, token=token)
+            self.assertEqual(status, 400, error)
+            self.assertEqual(self.practice_rows(), before)
+        regraded = self.req('/language-practice', 'PATCH', self.payload(item, grade=True))[1]['item']
+        self.assertEqual(regraded['model_answer'], item['model_answer'])
+        self.assertEqual(regraded['manual_review'], saved['manual_review'])
+        history = self.history('korean')['items'][0]
+        self.assertEqual(history, regraded)
+        historical = self.req('/language-practice', 'PATCH', self.payload(history, manual_result='incorrect', review=False))[1]['item']
+        self.assertEqual(historical['manual_review']['status'], 'incorrect')
+        self.assertFalse(historical['review'])
+        self.assertEqual(historical['grading'], regraded['grading'])
+
+    def test_corrupt_manual_results_are_hidden_and_invalid_auto_grade_cannot_be_confirmed(self):
+        item = self.grading_item()
+        self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True))
+        saved = self.req('/language-practice', 'PATCH', self.payload(item, manual_result='correct'))[1]['item']
+        with app.conn() as c:
+            original = json.loads(c.execute('SELECT manual_review FROM language_answers WHERE user_id=1').fetchone()[0])
+        corrupt = ['not json', '[]'] + [json.dumps({**original, **override}) for override in
+                   ({'status': []}, {'status': {}}, {'status': 'future'}, {'label': 'fake'},
+                    {'reviewed_answer':'other'}, {'reference_answer':'other'}, {'reviewed_at':None})]
+        for value in corrupt:
+            with self.subTest(value=value):
+                with app.conn() as c:
+                    c.execute('UPDATE language_answers SET manual_review=? WHERE user_id=1', (value,))
+                reloaded = self.daily(direction='to_zh', language='korean', level='1')['items'][0]
+                self.assertIsNone(reloaded['manual_review'])
+                self.assertEqual(reloaded['grading'], saved['grading'])
+                self.assertEqual(reloaded['answer'], saved['answer'])
+        with app.conn() as c:
+            c.execute("UPDATE language_answers SET grading='not json' WHERE user_id=1")
+        before = self.practice_rows()
+        self.assertEqual(self.req('/language-practice', 'PATCH', self.payload(item, manual_result='correct'))[0], 400)
+        self.assertEqual(self.practice_rows(), before)
+        self.assertIsNone(self.req('/language-practice', 'PATCH', self.payload(item, manual_result=None))[1]['item']['manual_review'])
+
+    def test_history_paginates_all_saved_nonblank_answers_across_dates_and_levels_privately(self):
+        # Use the production write helper against only the isolated fixture DB.
+        expected = []
+        with app.conn() as c:
+            for i in range(51):
+                day = (date(2026, 8, 1) + timedelta(days=i)).isoformat()
+                level = 'B1' if i % 2 else 'B2'
+                item = learning.daily_questions(c, 1, 'english', level, 'mixed', day)[0]
+                saved = learning.save_answer(c, 1, self.payload(item, answer=item['model_answer'], grade=True,
+                                                               completed=i % 3 == 0, review=i % 4 == 0))['item']
+                if i == 0:
+                    saved = learning.save_answer(c, 1, self.payload(item, manual_result='correct'))['item']
+                expected.append(saved)
+            for language, level, uid, answer in (('english','B2',2,'Other owner'), ('korean','1',1,'其他语种'),
+                                                 ('english','B2',1,''), ('english','B2',1,' \t\n\u3000\u00a0 ')):
+                day = (date(2026, 10, 1) + timedelta(days=len(expected))).isoformat()
+                item = learning.daily_questions(c, uid, language, level, 'to_target', day)[0]
+                # Two whitespace cases use distinct dates to retain both rows.
+                if not answer:
+                    item = learning.daily_questions(c, uid, language, level, 'to_target', '2026-10-01')[0]
+                learning.save_answer(c, uid, self.payload(item, answer=answer))
+        before = self.practice_rows()
+        pages = [self.history(page=page) for page in (1, 2, 3, 4)]
+        self.assertEqual([len(page['items']) for page in pages], [20,20,11,0])
+        self.assertEqual([page['has_more'] for page in pages], [True,True,False,False])
+        self.assertTrue(all(page['total']==51 and page['level']=='all' and page['level_label']=='所有级别' for page in pages))
+        actual = [item for page in pages for item in page['items']]
+        identity = lambda item: (item['level'], item['day'], item['practice_direction'], item['id'])
+        self.assertEqual({identity(item) for item in actual}, {identity(item) for item in expected})
+        self.assertEqual(len({identity(item) for item in actual}), 51)
+        by_id = {identity(item): item for item in actual}
+        self.assertTrue(all(by_id[identity(item)]==item for item in expected))
+        self.assertEqual(pages[0]['summary'], {'completed':17, 'total':51})
+        self.assertEqual(len(self.history(page_size=50)['items']), 50)
+        self.assertEqual(len(self.history(page=2, page_size=50)['items']), 1)
+        filtered = self.history(page_size=50, extra='&level=B1')
+        self.assertEqual(filtered['total'], 25)
+        self.assertTrue(all(item['level']=='B1' for item in filtered['items']))
+        other = self.history(token=self.other_token)
+        self.assertEqual((other['total'], other['items'][0]['answer']), (1, 'Other owner'))
+        self.assertEqual(self.history('korean')['total'], 1)
+        self.assertEqual(self.practice_rows(), before)
+
+    def test_history_uses_frozen_records_without_creating_daily_sets_or_requiring_live_bank(self):
+        self.assertEqual(self.history()['items'], [])
+        self.assertEqual(self.practice_rows()['language_daily_sets'], [])
+        item = self.daily(day='2026-10-01', level='B1')['items'][0]
+        saved = self.req('/language-practice', 'PATCH', self.payload(item, answer='Old frozen answer', grade=True, review=True))[1]['item']
+        self.write('language_english.json', {'levels': {}})
+        before = self.practice_rows()
+        self.assertEqual(self.history()['items'], [saved])
+        self.assertEqual(self.history(extra='&level=B1')['items'], [saved])
+        self.assertEqual(self.practice_rows(), before)
+        changed = self.req('/language-practice', 'PATCH', self.payload(saved, manual_result='incorrect', review=False))[1]['item']
+        self.assertEqual(changed['model_answer'], item['model_answer'])
+        self.assertEqual(changed['manual_review']['status'], 'incorrect')
+        self.assertFalse(changed['review'])
+        self.assertEqual(self.history()['items'], [changed])
+
+    def test_history_query_validation_and_auth_are_read_only(self):
+        before = self.practice_rows()
+        base = '/language-practice?mode=history&language=english'
+        for extra in ('&page=0', '&page=-1', '&page=1.5', '&page=true', '&page=1000001', '&page_size=21',
+                      '&page_size=0', '&page_size=50.0', '&level=C2', '&day=2026-11-02', '&direction=mixed', '&user_id=2'):
+            with self.subTest(extra=extra):
+                self.assertEqual(self.req(base+extra)[0], 400)
+        self.assertEqual(self.req('/language-practice?mode=history&language=spanish')[0], 400)
+        self.assertEqual(self.req('/language-practice?mode=unknown')[0], 400)
+        self.assertEqual(self.req(base, token=None)[0], 401)
+        with app.conn() as c:
+            for values in ({'page':True}, {'page_size':False}, {'page':[]}, {'level':[]}, {'language':[]}):
+                with self.subTest(values=values), self.assertRaises(ValueError):
+                    learning.history(c, 1, {'language':'english', **values})
+        self.assertEqual(self.practice_rows(), before)
 
     def test_grading_persists_in_daily_and_review_without_changing_completion(self):
         item = self.grading_item()
@@ -682,14 +888,14 @@ class PublishedLanguageContentTests(unittest.TestCase):
 
     def test_complete_english_routes_and_two_user_korean_portals_are_not_duplicated(self):
         courses = learning.course_catalog()
-        self.assertEqual(len(courses), 7)
+        self.assertEqual(len(courses), 9)
         self.assertEqual(sum(course['category']=='english' for course in courses), 4)
         self.assertEqual(sum(course['category']=='korean' for course in courses), 2)
-        self.assertEqual(sum(course['category']=='ai' for course in courses), 1)
-        self.assertEqual(len({course['key'] for course in courses}), 7)
+        self.assertEqual(sum(course['category']=='ai' for course in courses), 3)
+        self.assertEqual(len({course['key'] for course in courses}), 9)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 233)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 233)
+        self.assertEqual(len(units), 263)
+        self.assertEqual(len({lesson['id'] for lesson in units}), 263)
         original = [course for course in courses if course['key'] in ('english-system-b2','english-academic-openlearn')]
         original_units = [lesson for course in original for lesson in course['lessons']]
         self.assertEqual(len(original_units), 49)
@@ -716,7 +922,7 @@ class PublishedLanguageContentTests(unittest.TestCase):
         self.assertEqual(set(learning.read_json('language_courses.json')['retired_course_keys']),
                          {'english-zh-phonetics-cug','english-zh-grammar-yingyutu','english-system-b1'})
         self.assertTrue(all(course['key'] not in learning.read_json('language_courses.json')['retired_course_keys'] for course in courses))
-        topics = [lesson for lesson in units if lesson.get('unit_type') == 'topic']
+        topics = [lesson for lesson in dut['lessons'] if lesson.get('unit_type') == 'topic']
         self.assertEqual(len(topics), 33)
         self.assertEqual(len({lesson['module_key'] for lesson in topics}), 4)
         self.assertTrue(all('目录课题' in lesson['format'] for lesson in topics))
@@ -729,6 +935,8 @@ class PublishedLanguageContentTests(unittest.TestCase):
         self.assertEqual(len(ai['lessons']), 119)
         self.assertTrue(all(item['unit_type']=='video' and item['url'].startswith('https://www.bilibili.com/video/') for item in ai['lessons']))
         self.assertEqual(len({item['url'] for item in ai['lessons']}), 119)
+        self.assertEqual({course['key']: len(course['lessons']) for course in courses if course['category']=='ai'},
+                         {'ai-intro-xmu-video':119, 'ai-cv-d2l-selected':13, 'ai-autodriving-apollo-intro':17})
         for course in courses:
             if course['category']=='korean':
                 self.assertEqual(course['lessons'], [])
@@ -831,9 +1039,34 @@ class LanguageGradingRulesTests(unittest.TestCase):
         after = dict(c.execute('SELECT * FROM language_answers').fetchone())
         self.assertEqual({key: after[key] for key in before}, before)
         self.assertEqual(after['grading'], '')
+        self.assertEqual(after['manual_review'], '')
         learning.init(c)
         self.assertEqual(dict(c.execute('SELECT * FROM language_answers').fetchone()), after)
         self.assertEqual(sum(row['name']=='grading' for row in c.execute('PRAGMA table_info(language_answers)')), 1)
+        self.assertEqual(sum(row['name']=='manual_review' for row in c.execute('PRAGMA table_info(language_answers)')), 1)
+        c.close()
+
+    def test_manual_review_migration_preserves_all_existing_answers_and_automatic_grading_bytes(self):
+        c = sqlite3.connect(':memory:')
+        c.row_factory = sqlite3.Row
+        c.executescript('''
+            CREATE TABLE users(id INTEGER PRIMARY KEY);
+            CREATE TABLE courses(id INTEGER PRIMARY KEY,user_id INTEGER,category TEXT,curriculum_key TEXT);
+            CREATE TABLE language_answers(
+                user_id INTEGER, language TEXT, level TEXT, day TEXT, exercise_id TEXT, practice_direction TEXT,
+                answer TEXT, completed INTEGER, review INTEGER, updated_at TEXT, question TEXT,
+                grading TEXT NOT NULL DEFAULT '', PRIMARY KEY(user_id,language,level,day,practice_direction,exercise_id));
+            INSERT INTO language_answers VALUES(1,'korean','1','2026-11-05','old-question','mixed',
+                '旧答案',1,1,'original-timestamp','{"model_answer":"旧参考"}','{"existing":"auto-grade-bytes"}');
+        ''')
+        before = dict(c.execute('SELECT * FROM language_answers').fetchone())
+        learning.init(c)
+        after = dict(c.execute('SELECT * FROM language_answers').fetchone())
+        self.assertEqual({key: after[key] for key in before}, before)
+        self.assertEqual(after['manual_review'], '')
+        learning.init(c)
+        self.assertEqual(dict(c.execute('SELECT * FROM language_answers').fetchone()), after)
+        self.assertEqual(sum(row['name']=='manual_review' for row in c.execute('PRAGMA table_info(language_answers)')), 1)
         c.close()
 
 
