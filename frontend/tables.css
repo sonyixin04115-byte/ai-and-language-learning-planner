@@ -41,20 +41,20 @@ main[data-view="today"]{max-width:none;padding-inline:12px}
 .daily-task-card .task-table .col-task-actual{width:108px}
 .daily-task-card .task-table .col-task-status{width:72px}
 .daily-task-card .task-table .col-task-actions{width:300px}
-.daily-task-card .task-table th,.daily-task-card .task-table td{height:clamp(180px,22vh,220px);padding:24px 12px}
-.daily-task-card .task-table thead th{height:56px;padding-block:16px}
+.daily-task-card .task-table th,.daily-task-card .task-table td{height:88px;padding:12px}
+.daily-task-card .task-table thead th{height:44px;padding-block:10px}
 .daily-task-card .task-table thead th:first-child{padding-inline:8px}
 .daily-task-card .task-table .completion-cell{width:56px}
 .daily-task-card .task-table .time-cell{min-width:0}
-.daily-task-card .task-name .cell-open{font-size:16px;line-height:1.9}
-.daily-task-card .task-name .cell-preview{-webkit-line-clamp:5;line-clamp:5;max-height:9.5em}
+.daily-task-card .task-name .cell-open{font-size:16px;line-height:1.5}
+.daily-task-card .task-name .cell-preview{-webkit-line-clamp:3;line-clamp:3;max-height:4.5em}
 .daily-task-card .task-table .table-actions,.daily-task-card .task-table thead th:last-child{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-7px 0 10px -8px #40634a70,inset 1px 0 #d9e1d7}
 .daily-task-card .task-table thead th:last-child{z-index:3;background:#e9f0e5}
 .daily-task-card .task-table tbody tr:nth-child(even)>.table-actions{background:#fafcf8}
 .daily-task-card .task-table tbody tr:hover>.table-actions{background:#f0f6ec}
 .daily-task-card .task-table tr.is-done>.table-actions{background:#f0f5ed}
 .daily-task-card .task-action-buttons{gap:10px}
-.daily-task-card .task-action-buttons button{min-height:48px;padding:12px 14px;font-size:15px;line-height:1.5;white-space:nowrap}
+.daily-task-card .task-action-buttons button{min-height:40px;padding:8px 12px;font-size:15px;line-height:1.5;white-space:nowrap}
 @media(max-width:900px){main[data-view="today"]{padding-inline:12px}.daily-task-card{padding:22px 14px}}
 @media(max-width:700px){main[data-view="today"]{padding-inline:10px}.daily-task-card{padding:20px 12px}.daily-task-card .task-table .col-task-actions{width:220px}.daily-task-card .task-table th,.daily-task-card .task-table td{padding-inline:10px}.daily-task-card .task-action-buttons button{font-size:14px;padding-inline:11px}.daily-task-card .table-scroll{scroll-padding-right:232px}}
 
@@ -81,7 +81,7 @@ main[data-view="today"] .stats .actual-stat #settledActualTotal{font-size:21px}
 .daily-task-card .section-title h3{font-size:20px}
 .daily-task-card .toolbar{margin-bottom:14px}
 .daily-task-card .task-table input[type=checkbox]{width:26px;height:26px}
-.daily-task-card .task-name .cell-open-hint{margin-top:10px;font-size:12px}
+.daily-task-card .task-name .cell-open-hint{margin-top:6px;font-size:12px}
 @media(max-width:1000px){
  #app:has(>main[data-view="today"])>aside{flex-wrap:wrap;gap:10px;padding:12px 16px}
  #app:has(>main[data-view="today"])>aside nav{flex-basis:100%}
