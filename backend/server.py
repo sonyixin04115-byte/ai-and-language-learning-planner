@@ -8,6 +8,7 @@ import sys
 if str(ROOT_PATH := Path(__file__).resolve().parent) not in sys.path: sys.path.insert(0,str(ROOT_PATH))
 import materials
 import language_learning
+import listening_learning
 
 ROOT = Path(__file__).resolve().parent
 DB = Path(os.environ.get('STUDY_DB', str(ROOT / 'study.db')))
@@ -60,6 +61,7 @@ def init():
         if 'local_key' not in course_columns:c.execute('ALTER TABLE courses ADD COLUMN local_key TEXT')
         for user in c.execute('SELECT id FROM users').fetchall(): seed_supplements(c, user['id'])
         language_learning.init(c)
+        listening_learning.init(c)
 
 def seed_supplements(c, uid):
     if c.execute('SELECT user_id FROM course_defaults WHERE user_id=?', (uid,)).fetchone(): return
@@ -333,8 +335,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204); self.send_header('Access-Control-Allow-Origin',ORIGIN)
         self.send_header('Access-Control-Allow-Credentials','true')
-        self.send_header('Access-Control-Allow-Headers','Content-Type')
-        self.send_header('Access-Control-Allow-Methods','GET,POST,PATCH,DELETE,OPTIONS'); self.end_headers()
+        self.send_header('Access-Control-Allow-Headers','Content-Type,Range')
+        self.send_header('Access-Control-Allow-Methods','GET,HEAD,POST,PATCH,DELETE,OPTIONS'); self.end_headers()
     def do_GET(self): self.handle_api()
     def do_HEAD(self): self.handle_api()
     def do_POST(self): self.handle_api()
@@ -389,6 +391,33 @@ class Handler(BaseHTTPRequestHandler):
                     for row in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source,started_at,finished_at,pause_history FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,)):
                         task=dict(row);task['pause_intervals']=serialize_pause_history(read_pause_history(task.pop('pause_history')));tasks.append(task)
                     return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start','avatar')}, 'tasks':tasks, 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'language_settings':language_learning.settings(c,uid), 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                if path == '/api/listening/audio':
+                    if self.command not in ('GET','HEAD'):return self.reply(405, {'error':'不支持的操作'})
+                    query={key:values[-1] for key,values in parse_qs(urlsplit(self.path).query).items()}
+                    try:body=listening_learning.read_audio(c,uid,query)
+                    except (FileNotFoundError,OSError):return self.reply(404, {'error':'听力音频暂不可用，请刷新材料或选择设备语音'})
+                    size=len(body)
+                    try:start,end,partial=materials.range_bounds(self.headers.get('Range'),size)
+                    except ValueError:
+                        self.send_response(416)
+                        for key,value in {'Content-Range':f'bytes */{size}','Content-Length':'0','Accept-Ranges':'bytes','Cache-Control':'private, no-store','Access-Control-Allow-Origin':ORIGIN,'Access-Control-Allow-Credentials':'true'}.items():self.send_header(key,value)
+                        self.end_headers();return
+                    self.send_response(206 if partial else 200)
+                    for key,value in {'Content-Type':'audio/wav','Content-Length':str(end-start+1),'Accept-Ranges':'bytes','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Access-Control-Allow-Origin':ORIGIN,'Access-Control-Allow-Credentials':'true'}.items():self.send_header(key,value)
+                    if partial:self.send_header('Content-Range',f'bytes {start}-{end}/{size}')
+                    self.end_headers()
+                    if self.command!='HEAD':self.wfile.write(body[start:end+1])
+                    return
+                if path in ('/api/listening','/api/listening/reveal'):
+                    query={key:values[-1] for key,values in parse_qs(urlsplit(self.path).query).items()}
+                    if path=='/api/listening' and self.command=='GET':
+                        result=listening_learning.get(c,uid,query)
+                    elif self.command=='POST':
+                        c.execute('BEGIN IMMEDIATE')
+                        result=(listening_learning.reveal if path.endswith('/reveal') else listening_learning.submit)(c,uid,data)
+                    else:return self.reply(405, {'error':'不支持的操作'})
+                    c.commit()
+                    return self.reply(200,result)
                 if path in ('/api/language-practice','/api/language-practice/review','/api/language-settings'):
                     query={key:values[-1] for key,values in parse_qs(urlsplit(self.path).query).items()}
                     if path=='/api/language-practice' and self.command=='GET':

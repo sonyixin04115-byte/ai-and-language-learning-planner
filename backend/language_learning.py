@@ -58,11 +58,16 @@ def init(c):
             answer TEXT NOT NULL DEFAULT '', completed INTEGER NOT NULL DEFAULT 0,
             review INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL,
             question TEXT NOT NULL, grading TEXT NOT NULL DEFAULT '',
+            manual_review TEXT NOT NULL DEFAULT '',
             PRIMARY KEY(user_id,language,level,day,practice_direction,exercise_id));
+        CREATE INDEX IF NOT EXISTS language_answer_history
+            ON language_answers(user_id,language,updated_at DESC);
     ''')
     answer_columns = {row['name'] for row in c.execute('PRAGMA table_info(language_answers)')}
     if 'grading' not in answer_columns:
         c.execute("ALTER TABLE language_answers ADD COLUMN grading TEXT NOT NULL DEFAULT ''")
+    if 'manual_review' not in answer_columns:
+        c.execute("ALTER TABLE language_answers ADD COLUMN manual_review TEXT NOT NULL DEFAULT ''")
     for row in c.execute('SELECT id FROM users').fetchall():
         seed_courses(c, row['id'])
 
@@ -236,6 +241,7 @@ def daily_questions(c, uid, language, level, direction, day):
 
 GRADING_ENGINE = 'reference-v1'
 GRADING_LABELS = {'correct': '正确', 'incorrect': '需要修改', 'needs_review': '需复核'}
+MANUAL_REVIEW_LABELS = {'correct': '我判对', 'incorrect': '我判错'}
 _HAN = re.compile(r'[\u3400-\u9fff]')
 _HANGUL = re.compile(r'[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]')
 _LATIN = re.compile(r'[A-Za-z]')
@@ -404,15 +410,41 @@ def _saved_grading(question, row):
     return {key: value[key] for key in ('status', 'label', 'feedback', 'reference_answer', 'graded_answer', 'graded_at', 'engine')}
 
 
+def _saved_manual_review(question, row, grading=None):
+    if not row or 'manual_review' not in row.keys() or not row['manual_review']:
+        return None
+    if grading is None:
+        grading = _saved_grading(question, row)
+    if not grading or not row['answer'].strip():
+        return None
+    try:
+        value = json.loads(row['manual_review'])
+    except (ValueError, TypeError):
+        return None
+    if (not isinstance(value, dict) or not isinstance(value.get('status'), str)
+            or value['status'] not in MANUAL_REVIEW_LABELS
+            or value.get('label') != MANUAL_REVIEW_LABELS[value['status']]
+            or value.get('reviewed_answer') != row['answer']
+            or value.get('reference_answer') != question.get('model_answer')
+            or not isinstance(value.get('reviewed_at'), str) or not value['reviewed_at']):
+        return None
+    return {key: value[key] for key in ('status', 'label', 'reviewed_at', 'reviewed_answer')}
+
+
 def answer_item(question, row=None):
     result = dict(question)
+    grading = _saved_grading(question, row)
     result.update(answer=row['answer'] if row else '', completed=bool(row['completed']) if row else False,
                   review=bool(row['review']) if row else False, updated_at=row['updated_at'] if row else None,
-                  grading=_saved_grading(question, row))
+                  grading=grading, manual_review=_saved_manual_review(question, row, grading))
     return result
 
 
 def daily(c, uid, data):
+    if data.get('mode') == 'history':
+        return history(c, uid, data)
+    if data.get('mode', 'daily') != 'daily':
+        raise ValueError('练习视图无效')
     language, level, direction, day = validate_selection(data)
     content, selected = bank(language, level)
     questions = daily_questions(c, uid, language, level, direction, day)
@@ -430,8 +462,52 @@ def daily(c, uid, data):
                                                   (uid, language, level)).fetchone()[0]}}
 
 
+_ANSWER_WHITESPACE = ''.join(chr(code) for code in range(0x3001) if chr(code).isspace())
+
+
+def history(c, uid, data):
+    """Read saved attempts across dates/levels without composing or rewriting questions."""
+    if not isinstance(data, dict) or set(data) - {'language', 'mode', 'level', 'page', 'page_size'}:
+        raise ValueError('练习记录查询参数无效')
+    language = data.get('language', 'english')
+    if not isinstance(language, str) or language not in LANGUAGES:
+        raise ValueError('请选择英语或韩语')
+    if data.get('mode', 'history') != 'history':
+        raise ValueError('练习记录视图无效')
+    level = data.get('level')
+    if level in (None, '', 'all'):
+        level = None
+    elif not isinstance(level, str) or level not in LANGUAGES[language]:
+        raise ValueError('学习级别无效')
+    try:
+        if type(data.get('page', 1)) is bool or type(data.get('page_size', 20)) is bool:
+            raise ValueError
+        page, page_size = int(data.get('page', 1)), int(data.get('page_size', 20))
+    except (ValueError, TypeError, OverflowError):
+        raise ValueError('页码应为正整数，每页条数应为20或50')
+    if str(data.get('page', page)).strip() != str(page) or str(data.get('page_size', page_size)).strip() != str(page_size):
+        raise ValueError('页码应为正整数，每页条数应为20或50')
+    if not 1 <= page <= 1000000 or page_size not in (20, 50):
+        raise ValueError('页码应为1至1000000，每页可选20或50条')
+    where = 'user_id=? AND language=? AND length(trim(answer,?))>0'
+    parameters = [uid, language, _ANSWER_WHITESPACE]
+    if level is not None:
+        where += ' AND level=?'
+        parameters.append(level)
+    counts = c.execute('SELECT count(*),coalesce(sum(completed),0) FROM language_answers WHERE ' + where,
+                       parameters).fetchone()
+    rows = c.execute('SELECT * FROM language_answers WHERE ' + where
+                     + ' ORDER BY updated_at DESC,day DESC,level,practice_direction,exercise_id LIMIT ? OFFSET ?',
+                     parameters + [page_size + 1, (page - 1) * page_size]).fetchall()
+    items = [answer_item(json.loads(row['question']), row) for row in rows[:page_size]]
+    label = bank(language, level)[1].get('label', level) if level is not None else '所有级别'
+    return {'language': language, 'mode': 'history', 'level': level or 'all', 'level_label': label,
+            'items': items, 'total': counts[0], 'page': page, 'page_size': page_size,
+            'has_more': len(rows) > page_size, 'summary': {'completed': counts[1], 'total': counts[0]}}
+
+
 def save_answer(c, uid, data):
-    allowed = {'language', 'level', 'day', 'direction', 'exercise_id', 'answer', 'completed', 'review', 'grade'}
+    allowed = {'language', 'level', 'day', 'direction', 'exercise_id', 'answer', 'completed', 'review', 'grade', 'manual_result'}
     if not isinstance(data, dict) or set(data) - allowed:
         raise ValueError('练习数据无效')
     language, level, direction, day = validate_selection(data)
@@ -444,12 +520,17 @@ def save_answer(c, uid, data):
     completed = data.get('completed', bool(old['completed']) if old else False)
     review = data.get('review', bool(old['review']) if old else False)
     should_grade = data.get('grade', False)
+    has_manual_result = 'manual_result' in data
+    manual_result = data.get('manual_result')
     if not isinstance(answer, str) or len(answer) > 4000:
         raise ValueError('每条译文最多 4000 字')
     if type(completed) is not bool or type(review) is not bool:
         raise ValueError('练习完成和复习标记应为 true 或 false')
     if type(should_grade) is not bool:
         raise ValueError('批改标记应为 true 或 false')
+    if has_manual_result and manual_result is not None and (
+            not isinstance(manual_result, str) or manual_result not in MANUAL_REVIEW_LABELS):
+        raise ValueError('人工判断应为 correct、incorrect 或 null（撤销）')
     if completed and not answer.strip():
         raise ValueError('请先写下你的译文，再标记完成')
     if should_grade and not answer.strip():
@@ -458,16 +539,29 @@ def save_answer(c, uid, data):
                      if item['id'] == exercise_id), None)
     if question is None:
         raise ValueError('这道题不属于所选日期、级别或方向')
+    if has_manual_result:
+        if old is None or old['answer'] != answer:
+            raise ValueError('请先保存并批改当前答案，再进行人工判断')
+        if manual_result is not None and (not answer.strip() or _saved_grading(question, old) is None):
+            raise ValueError('请先对当前已保存的答案进行基础批改，再标记对错')
     updated = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
     grading = old['grading'] if old and old['answer'] == answer else ''
+    manual_review = old['manual_review'] if old and old['answer'] == answer else ''
     if should_grade:
         grading = json.dumps(grade_answer(question, answer, updated), ensure_ascii=False, separators=(',', ':'))
-    c.execute('''INSERT INTO language_answers(user_id,language,level,day,exercise_id,practice_direction,answer,completed,review,updated_at,question,grading)
-                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,language,level,day,practice_direction,exercise_id) DO UPDATE SET
+    if has_manual_result:
+        manual_review = '' if manual_result is None else json.dumps({
+            'status': manual_result, 'label': MANUAL_REVIEW_LABELS[manual_result],
+            'reviewed_at': updated, 'reviewed_answer': answer,
+            'reference_answer': question.get('model_answer'),
+        }, ensure_ascii=False, separators=(',', ':'))
+    c.execute('''INSERT INTO language_answers(user_id,language,level,day,exercise_id,practice_direction,answer,completed,review,updated_at,question,grading,manual_review)
+                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,language,level,day,practice_direction,exercise_id) DO UPDATE SET
                  practice_direction=excluded.practice_direction,answer=excluded.answer,completed=excluded.completed,
-                 review=excluded.review,updated_at=excluded.updated_at,question=excluded.question,grading=excluded.grading''',
+                 review=excluded.review,updated_at=excluded.updated_at,question=excluded.question,grading=excluded.grading,
+                 manual_review=excluded.manual_review''',
               (uid, language, level, day, exercise_id, direction, answer, int(completed), int(review), updated,
-               json.dumps(question, ensure_ascii=False, separators=(',', ':')), grading))
+               json.dumps(question, ensure_ascii=False, separators=(',', ':')), grading, manual_review))
     row = c.execute('SELECT * FROM language_answers WHERE user_id=? AND language=? AND level=? AND day=? AND practice_direction=? AND exercise_id=?',
                     (uid, language, level, day, direction, exercise_id)).fetchone()
     return {'ok': True, 'item': answer_item(question, row)}
