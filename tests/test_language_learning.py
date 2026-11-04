@@ -362,6 +362,46 @@ class LanguageLearningTests(unittest.TestCase):
         self.assertNotIn(cid, [item['id'] for item in self.req('/state')[1]['courses']])
         self.assertEqual(self.req(f'/courses/{cid}/lessons')[0], 404)
 
+    def test_new_video_main_keeps_dut_notes_archiving_identity_and_completion(self):
+        published = json.loads((Path(__file__).resolve().parents[1] /
+                                'backend/language_courses.json').read_text(encoding='utf-8-sig'))
+        dut = next(course for course in published['courses'] if course['key']=='english-zh-ielts-dut')
+        sun = next(course for course in published['courses'] if course['key']=='english-zh-ielts-sun-32')
+        previous = {**dut, **dut['previous_defaults'][-1]}
+        self.write('language_courses.json', {'courses': [previous]})
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+        original = next(course for course in self.req('/state')[1]['courses']
+                        if course['curriculum_key']==dut['key'])
+        cid, lesson_id = original['id'], dut['lessons'][0]['id']
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/{lesson_id}', 'PATCH', {'done':True})[0], 200)
+        self.assertEqual(self.req(f'/courses/{cid}', 'PATCH', {'description':'My existing DUT learning notes'})[0], 200)
+        self.assertEqual(self.req(f'/courses/{cid}', 'DELETE')[0], 200)
+        with app.conn() as c:
+            completed_before = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+        self.write('language_courses.json', {'courses': [sun, dut]})
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+            changes = c.total_changes
+            learning.seed_courses(c, 1)
+            self.assertEqual(c.total_changes, changes)
+            retained = dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone())
+            self.assertEqual((retained['curriculum_key'], retained['archived'], retained['description']),
+                             (dut['key'], 1, 'My existing DUT learning notes'))
+            self.assertEqual(retained['title'], dut['title'])
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], completed_before)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1 AND curriculum_key=?',
+                                       (sun['key'],)).fetchone()[0], 1)
+        current = next(course for course in self.req('/state')[1]['courses']
+                       if course['curriculum_key']==sun['key'])
+        self.assertEqual((current['learning_role'], current['video_count'], current['trackable_count']),
+                         ('main', 32, 32))
+        content = self.req(f"/courses/{current['id']}/lessons")[1]
+        self.assertEqual([lesson['id'] for lesson in content['lessons']], [lesson['id'] for lesson in sun['lessons']])
+        self.assertFalse(any(lesson['done'] for lesson in content['lessons']))
+        self.assertEqual(self.req(f"/courses/{current['id']}/lessons", token=self.other_token)[0], 404)
+        self.assertEqual(self.req(f'/courses/{cid}/lessons')[0], 404)
+
     def test_course_changes_without_known_previous_defaults_do_not_replace_saved_metadata(self):
         original = next(item for item in self.req('/state')[1]['courses'] if item['category']=='english')
         catalog = json.loads((self.resources / 'language_courses.json').read_text(encoding='utf-8'))
@@ -525,15 +565,15 @@ class PublishedLanguageContentTests(unittest.TestCase):
 
     def test_complete_english_routes_and_two_user_korean_portals_are_not_duplicated(self):
         courses = learning.course_catalog()
-        self.assertEqual(len(courses), 6)
-        self.assertEqual(sum(course['category']=='english' for course in courses), 3)
+        self.assertEqual(len(courses), 7)
+        self.assertEqual(sum(course['category']=='english' for course in courses), 4)
         self.assertEqual(sum(course['category']=='korean' for course in courses), 2)
         self.assertEqual(sum(course['category']=='ai' for course in courses), 1)
-        self.assertEqual(len({course['key'] for course in courses}), 6)
+        self.assertEqual(len({course['key'] for course in courses}), 7)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 201)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 201)
-        original = [course for course in courses if course.get('learning_role') in ('practice', 'reference')]
+        self.assertEqual(len(units), 233)
+        self.assertEqual(len({lesson['id'] for lesson in units}), 233)
+        original = [course for course in courses if course['key'] in ('english-system-b2','english-academic-openlearn')]
         original_units = [lesson for course in original for lesson in course['lessons']]
         self.assertEqual(len(original_units), 49)
         self.assertEqual(len({lesson['url'] for lesson in original_units}), 49)
@@ -541,11 +581,21 @@ class PublishedLanguageContentTests(unittest.TestCase):
         chinese = [course for course in courses if course['category']=='english' and course.get('learning_role') in ('main', 'ielts')]
         self.assertEqual(len(chinese), 1)
         self.assertTrue(all(course['instruction_language']=='中文讲解' for course in chinese))
-        self.assertEqual(sorted(len(course['lessons']) for course in chinese), [33])
+        self.assertEqual(sorted(len(course['lessons']) for course in chinese), [32])
         for course in chinese:
             metadata = app.course_metadata({'curriculum_key':course['key']})
-            self.assertEqual(metadata['video_count'], 0)
-            self.assertEqual(metadata['unit_label'], '课题')
+            self.assertEqual(metadata['video_count'], 32)
+            self.assertEqual(metadata['unit_label'], '节')
+        sun = chinese[0]
+        self.assertEqual(sun['key'], 'english-zh-ielts-sun-32')
+        self.assertEqual([lesson['url'] for lesson in sun['lessons']],
+                         [f'https://www.bilibili.com/video/BV1TL411k7WK/?p={part}' for part in range(1,33)])
+        self.assertEqual(len({lesson['section'] for lesson in sun['lessons']}), 8)
+        self.assertTrue(all(lesson['unit_type']=='video' and lesson['format']=='视频' for lesson in sun['lessons']))
+        self.assertEqual(sum(lesson['duration_seconds'] for lesson in sun['lessons']), 49749)
+        dut = next(course for course in courses if course['key']=='english-zh-ielts-dut')
+        self.assertEqual((dut['learning_role'],len(dut['lessons'])), ('reference',33))
+        self.assertEqual(app.course_metadata({'curriculum_key':dut['key']})['video_count'], 0)
         self.assertEqual(set(learning.read_json('language_courses.json')['retired_course_keys']),
                          {'english-zh-phonetics-cug','english-zh-grammar-yingyutu','english-system-b1'})
         self.assertTrue(all(course['key'] not in learning.read_json('language_courses.json')['retired_course_keys'] for course in courses))

@@ -50,7 +50,7 @@ class BackendTests(unittest.TestCase):
 
     def assert_default_courses(self):
         courses=self.state()['courses']
-        self.assertEqual(len(courses),9)
+        self.assertEqual(len(courses),10)
         ai=[course for course in courses if course['category']=='ai']
         self.assertEqual(len(ai),4)
         self.assertEqual({(course['title'],course['url']) for course in ai if course['curriculum_key'] is None},{
@@ -62,12 +62,15 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(video['video_count'],119)
         self.assertEqual(video['trackable_count'],119)
         self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='english'},
-            {'english-system-b2','english-academic-openlearn','english-zh-ielts-dut'})
+            {'english-system-b2','english-academic-openlearn','english-zh-ielts-dut','english-zh-ielts-sun-32'})
+        english_main=next(course for course in courses if course['curriculum_key']=='english-zh-ielts-sun-32')
+        self.assertEqual((english_main['video_count'],english_main['trackable_count'],english_main['learning_role']),
+            (32,32,'main'))
         self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='korean'},
             {'korean-chongya','korean-hanyuup'})
         self.assertEqual({course['category'] for course in courses},{'ai','english','korean'})
         recommended=[course for course in courses if course['category'] in ('ai','english')]
-        self.assertEqual(len(recommended),7)
+        self.assertEqual(len(recommended),8)
         self.assertEqual({course['source_label'] for course in recommended},{'补充推荐'})
         self.assertEqual({course['source'] for course in recommended},{'supplement'})
         korean=[course for course in courses if course['category']=='korean']
