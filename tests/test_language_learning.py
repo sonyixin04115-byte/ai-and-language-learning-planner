@@ -1,6 +1,7 @@
 """Language questions, cross-device persistence and course progress use real HTTP."""
 from pathlib import Path
 import json
+import sqlite3
 import unittest
 from unittest.mock import patch
 
@@ -69,6 +70,122 @@ class LanguageLearningTests(unittest.TestCase):
     def payload(self, item, **values):
         return {'language': item['language'], 'level': item['level'], 'day': item['day'],
                 'direction': item['practice_direction'], 'exercise_id': item['id'], **values}
+
+    def grading_item(self, day='2026-11-02', direction='to_zh', token='owner'):
+        self.write('language_korean.json', {'levels': {'1': {'label': '第1册', 'points': [{
+            'id': 'ko-grade', 'knowledge_point': '은/는',
+            'examples': [{'target': '저는 중국에서 왔어요.', 'zh': '我来自中国。'}],
+        }]}}})
+        return self.daily(day, direction, token, 'korean', '1')['items'][0]
+
+    def test_grading_persists_in_daily_and_review_without_changing_completion(self):
+        item = self.grading_item()
+        status, result = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True))
+        self.assertEqual(status, 200, result)
+        saved = result['item']
+        self.assertEqual(saved['grading']['status'], 'correct')
+        self.assertEqual(saved['grading']['graded_answer'], '我来自中国')
+        self.assertEqual(saved['grading']['engine'], 'reference-v1')
+        self.assertTrue(saved['grading']['graded_at'].endswith('Z'))
+        self.assertFalse(saved['completed'] or saved['review'])
+        self.assertEqual(self.daily(direction='to_zh', language='korean', level='1')['items'][0]['grading'], saved['grading'])
+        result = self.req('/language-practice', 'PATCH', self.payload(item, completed=True, review=True))[1]['item']
+        self.assertEqual(result['grading'], saved['grading'])
+        self.assertTrue(result['completed'] and result['review'])
+        review = self.req('/language-practice/review?language=korean&level=1')[1]['items'][0]
+        self.assertEqual(review['grading'], saved['grading'])
+        self.assertIsNone(self.grading_item(token=self.other_token)['grading'])
+
+    def test_any_raw_answer_change_invalidates_grading_even_if_meaning_matches(self):
+        item = self.grading_item()
+        self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True, review=True))
+        result = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国。'))[1]['item']
+        self.assertIsNone(result['grading'])
+        self.assertTrue(result['review'])
+        with app.conn() as c:
+            self.assertEqual(c.execute('SELECT grading FROM language_answers WHERE user_id=1').fetchone()[0], '')
+        result = self.req('/language-practice', 'PATCH', self.payload(item, grade=True))[1]['item']
+        self.assertEqual(result['grading']['status'], 'correct')
+        before = result['grading']
+        result = self.req('/language-practice', 'PATCH', self.payload(item, grade=False, completed=True))[1]['item']
+        self.assertEqual(result['grading'], before)
+
+    def test_grading_uses_frozen_question_and_scope_not_client_supplied_reference(self):
+        item = self.grading_item()
+        first = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True, review=True))[1]['item']
+        self.write('language_korean.json', {'levels': {'1': {'points': [{
+            'id': 'ko-grade', 'knowledge_point': 'Changed point',
+            'examples': [{'target': '저는 한국에서 왔어요.', 'zh': '我来自韩国。'}],
+        }]}}})
+        result = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True))[1]['item']
+        self.assertEqual(result['grading']['reference_answer'], '我来自中国。')
+        self.assertEqual(result['grading']['status'], 'correct')
+        review = self.req('/language-practice/review?language=korean&level=1')[1]['items'][0]
+        self.assertEqual((review['source_text'], review['grading']), (item['source_text'], result['grading']))
+        for values in ({'model_answer': 'fake'}, {'reference_answer': 'fake'}, {'grading': first['grading']},
+                       {'user_id': 2}, {'grade': 1}, {'grade': 'true'}, {'grade': None},
+                       {'direction': 'to_target'}, {'level': '2'}, {'day': '2026-02-30'}, {'exercise_id': 'not-owned'}):
+            with self.subTest(values=values):
+                payload = {**self.payload(item, answer='我来自中国', grade=True), **values}
+                self.assertEqual(self.req('/language-practice', 'PATCH', payload)[0], 400)
+        self.assertEqual(self.daily(direction='to_zh', language='korean', level='1')['items'][0], result)
+
+    def test_empty_grading_is_rejected_without_creating_answers_or_daily_sets(self):
+        item = self.grading_item()
+        self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True))
+        with app.conn() as c:
+            before = {table: [tuple(row) for row in c.execute('SELECT * FROM '+table)]
+                      for table in ('language_answers', 'language_daily_sets')}
+        status, error = self.req('/language-practice', 'PATCH', self.payload(item, day='2026-11-03', answer=' \n ', grade=True))
+        self.assertEqual(status, 400)
+        self.assertIn('先写', error['error'])
+        with app.conn() as c:
+            after = {table: [tuple(row) for row in c.execute('SELECT * FROM '+table)] for table in before}
+        self.assertEqual(after, before)
+
+    def test_grading_is_separate_between_accounts_dates_and_practice_modes(self):
+        original = self.grading_item()
+        saved = self.req('/language-practice', 'PATCH', self.payload(original, answer='我来自中国', grade=True))[1]['item']
+        for day, direction, token in (('2026-11-03', 'to_zh', 'owner'), ('2026-11-02', 'mixed', 'owner'),
+                                      ('2026-11-02', 'to_target', 'owner'),
+                                      ('2026-11-02', 'to_zh', self.other_token)):
+            with self.subTest(day=day, direction=direction, token=token):
+                item = self.grading_item(day, direction, token)
+                self.assertIsNone(item['grading'])
+                response = self.req('/language-practice', 'PATCH', self.payload(item, answer=item['model_answer'], grade=True), token=token)
+                self.assertEqual(response[0], 200, response)
+                self.assertEqual(response[1]['item']['grading']['status'], 'correct')
+                self.assertEqual(self.daily(direction='to_zh', language='korean', level='1')['items'][0], saved)
+
+    def test_same_exercise_id_in_another_level_uses_its_own_reference_and_grading(self):
+        original = self.grading_item()
+        saved = self.req('/language-practice', 'PATCH', self.payload(original, answer='我来自中国', grade=True))[1]['item']
+        bank = json.loads((self.resources/'language_korean.json').read_text(encoding='utf-8'))
+        bank['levels']['2'] = {'label': '第2册', 'points': [{
+            'id': 'ko-grade', 'knowledge_point': '은/는',
+            'examples': [{'target': '저는 한국에서 왔어요.', 'zh': '我来自韩国。'}],
+        }]}
+        self.write('language_korean.json', bank)
+        item = self.daily(direction='to_zh', language='korean', level='2')['items'][0]
+        self.assertEqual(item['id'], original['id'])
+        self.assertIsNone(item['grading'])
+        result = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自韩国', grade=True))[1]['item']
+        self.assertEqual((result['grading']['status'], result['grading']['reference_answer']), ('correct', '我来自韩国。'))
+        self.assertEqual(self.daily(direction='to_zh', language='korean', level='1')['items'][0], saved)
+
+    def test_corrupt_or_obsolete_grading_is_hidden_without_losing_the_answer(self):
+        item = self.grading_item()
+        saved = self.req('/language-practice', 'PATCH', self.payload(item, answer='我来自中国', grade=True))[1]['item']
+        for value in ('not json', '[]', json.dumps({**saved['grading'], 'engine': 'unknown'}),
+                      json.dumps({**saved['grading'], 'status': []}), json.dumps({**saved['grading'], 'status': {}}),
+                      json.dumps({**saved['grading'], 'graded_answer': 'different'}),
+                      json.dumps({**saved['grading'], 'reference_answer': 'different'})):
+            with self.subTest(value=value):
+                with app.conn() as c:
+                    c.execute('UPDATE language_answers SET grading=? WHERE user_id=1', (value,))
+                result = self.daily(direction='to_zh', language='korean', level='1')['items'][0]
+                self.assertIsNone(result['grading'])
+                self.assertEqual(result['answer'], '我来自中国')
 
     def test_refresh_keeps_questions_and_next_day_uses_different_pairs(self):
         first = self.daily()
@@ -625,6 +742,99 @@ class PublishedLanguageContentTests(unittest.TestCase):
                 self.assertEqual(len(first), 5)
                 self.assertEqual(first, learning.compose_questions(language, level, 'to_target', '2026-11-02'))
                 self.assertTrue({item['model_answer'] for item in first}.isdisjoint(item['model_answer'] for item in second))
+
+
+class LanguageGradingRulesTests(unittest.TestCase):
+    def question(self, reference='我来自中国。', *, language='korean', direction='to_zh',
+                 source='저는 중국에서 왔어요.', point='은/는'):
+        return {'model_answer': reference, 'language': language, 'direction': direction,
+                'source_text': source, 'knowledge_point': point}
+
+    def test_screenshot_and_reviewed_chinese_variants_are_correct(self):
+        q = self.question()
+        for answer in ('我来自中国', '我 来 自 中 国。', '我从中国来', '我是从中国来的'):
+            with self.subTest(answer=answer):
+                result = learning.grade_answer(q, answer)
+                self.assertEqual(result['status'], 'correct')
+                self.assertEqual(result['graded_answer'], answer)
+                self.assertEqual(result['reference_answer'], q['model_answer'])
+        q['knowledge_point'] = 'A different point'
+        self.assertEqual(learning.grade_answer(q, '我是从中国来的')['status'], 'needs_review')
+
+    def test_single_country_day_number_and_negation_changes_are_not_accepted(self):
+        cases = [(self.question(), '我来自韩国', '国家'),
+                 (self.question('我今天上课。'), '我明天上课。', '时间'),
+                 (self.question('数值是3.5。'), '数值是35。', '数值'),
+                 (self.question('我今天去学校。'), '我今天不去学校。', '否定'),
+                 (self.question('I can attend the meeting.', language='english', direction='to_target', source='我可以参加会议。'),
+                  'I cannot attend the meeting.', '否定')]
+        for q, answer, reason in cases:
+            with self.subTest(answer=answer):
+                result = learning.grade_answer(q, answer)
+                self.assertEqual(result['status'], 'incorrect')
+                self.assertTrue(any(reason in text for text in result['feedback']))
+
+    def test_script_and_copied_source_are_diagnosed_without_semantic_guessing(self):
+        q = self.question('여기가 교수님 연구실입니까?', direction='to_target', source='这里是教授的研究室吗？', point='입니까?')
+        for answer in ('这里是教授的研究室吗？', 'This is the professor office.'):
+            with self.subTest(answer=answer):
+                self.assertEqual(learning.grade_answer(q, answer)['status'], 'incorrect')
+        self.assertEqual(learning.grade_answer(self.question(), '저는 중국에서 왔어요.')['status'], 'incorrect')
+        with self.assertRaisesRegex(ValueError, '先写'):
+            learning.grade_answer(q, ' \n ')
+
+    def test_internal_punctuation_and_word_boundaries_are_not_erased(self):
+        cases = [
+            (self.question("We'll meet at 3.5.", language='english', direction='to_target'), 'Well meet at 35.'),
+            (self.question('I will re-sign.', language='english', direction='to_target'), 'I will resign.'),
+            (self.question('아버지가 방에 들어가요.', direction='to_target'), '아버지 가방에 들어가요.'),
+            (self.question('代码是AB。'), '代码是A B。'),
+            (self.question('代码是3 5。'), '代码是35。'),
+            (self.question('저는 학생이에요.', direction='to_target'), '저는 학생이에요?'),
+        ]
+        for q, answer in cases:
+            with self.subTest(answer=answer):
+                self.assertEqual(learning.grade_answer(q, answer)['status'], 'needs_review')
+
+    def test_ambiguous_scope_aliases_and_paraphrases_require_review(self):
+        cases = [
+            (self.question('The value is 3.5.', language='english', direction='to_target'), 'The value is 3.50.'),
+            (self.question('I come from America.', language='english', direction='to_target'), 'I come from United States.'),
+            (self.question('I come from Britain.', language='english', direction='to_target'), 'I come from United Kingdom.'),
+            (self.question('I can not only read but also write.', language='english', direction='to_target'), 'I cannot only read but also write.'),
+            (self.question('교수님은 친절해요.', direction='to_target'), '안 교수님은 친절해요.'),
+            (self.question('我不是不想去。'), '我想去。'),
+            (self.question(), '中国是我的家乡。'),
+            (self.question('三点五。', source='3.5'), '3.5'),
+        ]
+        for q, answer in cases:
+            with self.subTest(answer=answer):
+                self.assertEqual(learning.grade_answer(q, answer)['status'], 'needs_review')
+        q = self.question('We will meet tomorrow.', language='english', direction='to_target')
+        self.assertEqual(learning.grade_answer(q, "We'll meet tomorrow.")['status'], 'correct')
+
+    def test_existing_answer_table_migrates_idempotently_without_changing_original_fields(self):
+        c = sqlite3.connect(':memory:')
+        c.row_factory = sqlite3.Row
+        c.executescript('''
+            CREATE TABLE users(id INTEGER PRIMARY KEY);
+            CREATE TABLE courses(id INTEGER PRIMARY KEY,user_id INTEGER,category TEXT,curriculum_key TEXT);
+            CREATE TABLE language_answers(
+                user_id INTEGER, language TEXT, level TEXT, day TEXT, exercise_id TEXT, practice_direction TEXT,
+                answer TEXT, completed INTEGER, review INTEGER, updated_at TEXT, question TEXT,
+                PRIMARY KEY(user_id,language,level,day,practice_direction,exercise_id));
+            INSERT INTO language_answers VALUES(1,'korean','1','2026-11-05','old-question','mixed',
+                '旧答案',1,1,'original-timestamp','{"model_answer":"旧参考"}');
+        ''')
+        before = dict(c.execute('SELECT * FROM language_answers').fetchone())
+        learning.init(c)
+        after = dict(c.execute('SELECT * FROM language_answers').fetchone())
+        self.assertEqual({key: after[key] for key in before}, before)
+        self.assertEqual(after['grading'], '')
+        learning.init(c)
+        self.assertEqual(dict(c.execute('SELECT * FROM language_answers').fetchone()), after)
+        self.assertEqual(sum(row['name']=='grading' for row in c.execute('PRAGMA table_info(language_answers)')), 1)
+        c.close()
 
 
 if __name__ == '__main__':
