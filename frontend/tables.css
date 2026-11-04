@@ -28,32 +28,63 @@
 .planner-table .time-cell{min-width:112px;font-size:12px;font-variant-numeric:tabular-nums}.time-cell time{display:flex;flex-direction:column;gap:2px}.time-cell time span{font-size:11px;color:var(--muted)}.time-cell time strong{font-size:12px;font-weight:500}.table-status.running,.timing-active{color:#b07524}.task-table .table-actions button:disabled{opacity:.6;cursor:wait}.task-timing{border:1px solid #d9e1d7;border-radius:6px;padding:12px 14px;margin:14px 0}.task-timing legend{padding:0 5px;font-size:13px;color:#4d6c50}.task-time-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.task-time-inputs label{min-width:0;margin:0}.task-time-inputs input{min-width:0;width:100%;font-size:13px}.task-timing p{font-size:12px;line-height:1.6;margin:10px 0 0}#taskForm input[readonly]{background:#f2f5ef;color:#54715d;cursor:default}@media(max-width:560px){.task-time-inputs{grid-template-columns:1fr}}
 
 /* The daily task workspace uses the available screen; other views keep their layout. */
-main[data-view="today"]{max-width:none;padding-inline:20px}
-.daily-task-card{padding:22px 16px}
-.daily-task-card .table-scroll{min-height:280px;scroll-padding-inline:52px 250px}
-.daily-task-card .task-table{min-width:1330px}
-.daily-task-card .task-table .col-task-complete{width:48px}
+main[data-view="today"]{max-width:none;padding-inline:12px}
+.daily-task-card{padding:24px 18px}
+.daily-task-card .table-scroll{min-height:max(520px,60vh);scroll-padding-inline:60px 312px}
+.daily-task-card .task-table{min-width:1480px}
+.daily-task-card .task-table .col-task-complete{width:56px}
 .daily-task-card .task-table .col-task-title{width:auto}
-.daily-task-card .task-table .col-task-day{width:92px}
+.daily-task-card .task-table .col-task-day{width:88px}
 .daily-task-card .task-table .col-task-category{width:80px}
-.daily-task-card .task-table .col-task-planned{width:80px}
-.daily-task-card .task-table .col-task-time{width:104px}
+.daily-task-card .task-table .col-task-planned{width:76px}
+.daily-task-card .task-table .col-task-time{width:100px}
 .daily-task-card .task-table .col-task-actual{width:108px}
-.daily-task-card .task-table .col-task-status{width:76px}
-.daily-task-card .task-table .col-task-actions{width:238px}
-.daily-task-card .task-table th,.daily-task-card .task-table td{height:128px;padding:16px 12px}
-.daily-task-card .task-table thead th{height:48px;padding-block:13px}
+.daily-task-card .task-table .col-task-status{width:72px}
+.daily-task-card .task-table .col-task-actions{width:300px}
+.daily-task-card .task-table th,.daily-task-card .task-table td{height:clamp(180px,22vh,220px);padding:24px 12px}
+.daily-task-card .task-table thead th{height:56px;padding-block:16px}
 .daily-task-card .task-table thead th:first-child{padding-inline:8px}
-.daily-task-card .task-table .completion-cell{width:48px}
+.daily-task-card .task-table .completion-cell{width:56px}
 .daily-task-card .task-table .time-cell{min-width:0}
-.daily-task-card .task-name .cell-open{line-height:1.75}
-.daily-task-card .task-name .cell-preview{-webkit-line-clamp:4;line-clamp:4;max-height:7em}
+.daily-task-card .task-name .cell-open{font-size:16px;line-height:1.9}
+.daily-task-card .task-name .cell-preview{-webkit-line-clamp:5;line-clamp:5;max-height:9.5em}
 .daily-task-card .task-table .table-actions,.daily-task-card .task-table thead th:last-child{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-7px 0 10px -8px #40634a70,inset 1px 0 #d9e1d7}
 .daily-task-card .task-table thead th:last-child{z-index:3;background:#e9f0e5}
 .daily-task-card .task-table tbody tr:nth-child(even)>.table-actions{background:#fafcf8}
 .daily-task-card .task-table tbody tr:hover>.table-actions{background:#f0f6ec}
 .daily-task-card .task-table tr.is-done>.table-actions{background:#f0f5ed}
-.daily-task-card .task-action-buttons{gap:8px}
-.daily-task-card .task-action-buttons button{padding:8px 10px;line-height:1.5;white-space:nowrap}
-@media(max-width:900px){main[data-view="today"]{padding-inline:16px}.daily-task-card{padding:20px 14px}}
-@media(max-width:700px){main[data-view="today"]{padding-inline:12px}.daily-task-card{padding:18px 12px}.daily-task-card .task-table .col-task-actions{width:210px}.daily-task-card .task-table th,.daily-task-card .task-table td{padding-inline:10px}.daily-task-card .table-scroll{scroll-padding-right:220px}}
+.daily-task-card .task-action-buttons{gap:10px}
+.daily-task-card .task-action-buttons button{min-height:48px;padding:12px 14px;font-size:15px;line-height:1.5;white-space:nowrap}
+@media(max-width:900px){main[data-view="today"]{padding-inline:12px}.daily-task-card{padding:22px 14px}}
+@media(max-width:700px){main[data-view="today"]{padding-inline:10px}.daily-task-card{padding:20px 12px}.daily-task-card .task-table .col-task-actions{width:220px}.daily-task-card .task-table th,.daily-task-card .task-table td{padding-inline:10px}.daily-task-card .task-action-buttons button{font-size:14px;padding-inline:11px}.daily-task-card .table-scroll{scroll-padding-right:232px}}
+
+/* Today opens as a full-width workspace, with every navigation item still available. */
+@supports selector(:has(*)){
+ #app:has(>main[data-view="today"])>aside{position:static;width:100%;display:flex;align-items:center;gap:24px;padding:12px 20px;border-right:0;border-bottom:1px solid var(--line)}
+ #app:has(>main[data-view="today"])>aside .brand{flex:none;gap:8px}
+ #app:has(>main[data-view="today"])>aside .brand-name{font-size:20px;letter-spacing:0}
+ #app:has(>main[data-view="today"])>aside .brand-name>span{display:inline}
+ #app:has(>main[data-view="today"])>aside .side-caption,#app:has(>main[data-view="today"])>aside .side-bottom{display:none}
+ #app:has(>main[data-view="today"])>aside nav{display:flex;flex:1;gap:4px;margin:0;min-width:0;max-height:none;overflow-x:auto;overflow-y:hidden}
+ #app:has(>main[data-view="today"])>aside nav button{flex:none;width:auto;margin:0;padding:9px 14px;font-size:13px;text-align:center;white-space:nowrap}
+ #app>main[data-view="today"]{margin-left:0}
+}
+main[data-view="today"]>header{height:46px;margin-bottom:12px}
+main[data-view="today"] .hero{gap:16px;margin-bottom:12px}
+main[data-view="today"] .hero .eyebrow{display:none}
+main[data-view="today"] .hero h1{font-size:25px;margin:0 0 2px}
+main[data-view="today"] .hero p{font-size:12px}
+main[data-view="today"] .stats{margin-bottom:16px}
+main[data-view="today"] .stats .stat{display:flex;align-items:center;gap:12px;padding:9px 18px}
+main[data-view="today"] .stats .stat strong{margin:0;font-size:21px;white-space:nowrap}
+main[data-view="today"] .stats .actual-stat #settledActualTotal{font-size:21px}
+.daily-task-card .section-title h3{font-size:20px}
+.daily-task-card .toolbar{margin-bottom:14px}
+.daily-task-card .task-table input[type=checkbox]{width:26px;height:26px}
+.daily-task-card .task-name .cell-open-hint{margin-top:10px;font-size:12px}
+@media(max-width:1000px){
+ #app:has(>main[data-view="today"])>aside{flex-wrap:wrap;gap:10px;padding:12px 16px}
+ #app:has(>main[data-view="today"])>aside nav{flex-basis:100%}
+ main[data-view="today"] .stats .stat{display:block;padding:9px 12px}
+ main[data-view="today"] .stats .stat strong{margin-top:2px}
+}
