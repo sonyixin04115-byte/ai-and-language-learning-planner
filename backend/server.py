@@ -13,6 +13,7 @@ import listening_learning
 ROOT = Path(__file__).resolve().parent
 DB = Path(os.environ.get('STUDY_DB', str(ROOT / 'study.db')))
 ORIGIN = os.environ.get('STUDY_ORIGIN', 'http://127.0.0.1:5174')
+SESSION_SECONDS = 604800
 WEEKS = [
  ('Python 起步', ['安装 Python，运行第一段程序','变量、数字与字符串','输入输出与类型转换','条件判断 if / else','循环 for / while','练习：猜数字游戏','复习与整理本周代码']),
  ('Python 数据结构', ['列表与切片','元组、集合与字典','函数与参数','模块与标准库','文件读写与异常','练习：命令行记账本','复习：独立重写记账本']),
@@ -352,7 +353,11 @@ class Handler(BaseHTTPRequestHandler):
             path = self.path.split('?')[0]
             if path == '/api/health' and self.command == 'GET': return self.reply(200, {'app':'zhixu-planner','version':'2'})
             with conn() as c:
+                cookies = dict(p.strip().split('=',1) for p in self.headers.get('Cookie','').split(';') if '=' in p)
+                current_token = cookies.get('session','')
                 if path in ('/api/register','/api/login') and self.command == 'POST':
+                    auto_login = data.get('auto_login',False)
+                    if not isinstance(auto_login,bool):return self.reply(400, {'error':'自动登录设置无效'})
                     username = str(data.get('username','')).strip()
                     password = str(data.get('password',''))
                     if not 3 <= len(username) <= 40 or not 8 <= len(password) <= 128:
@@ -372,17 +377,29 @@ class Handler(BaseHTTPRequestHandler):
                         hashed = hashlib.pbkdf2_hmac('sha256',password.encode(),salt.encode(),600000).hex()
                         if not u or not secrets.compare_digest(hashed,u['password']): return self.reply(401, {'error':'用户名或密码错误'})
                         uid = u['id']
-                    token = secrets.token_urlsafe(32)
+                    # The mode is bound to the exact random token stored by the server.
+                    # Legacy tokens have no dot and are deliberately treated as manual.
+                    token = ('auto.' if auto_login else 'manual.') + secrets.token_urlsafe(32)
                     c.execute('DELETE FROM sessions WHERE expires < ?',(time.time(),))
-                    c.execute('INSERT INTO sessions VALUES(?,?,?)',(token,uid,time.time()+604800))
-                    return self.reply(200, {'ok':True},f'session={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800')
-                cookies = dict(p.strip().split('=',1) for p in self.headers.get('Cookie','').split(';') if '=' in p)
-                token = cookies.get('session','')
+                    c.execute('DELETE FROM sessions WHERE token=?',(current_token,))
+                    c.execute('INSERT INTO sessions VALUES(?,?,?)',(token,uid,time.time()+SESSION_SECONDS))
+                    cookie=f'session={token}; HttpOnly; SameSite=Strict; Path=/'
+                    if auto_login:cookie+=f'; Max-Age={SESSION_SECONDS}'
+                    return self.reply(200, {'ok':True,'auto_login':auto_login},cookie)
+                token = current_token
+                if path == '/api/logout' and self.command == 'POST':
+                    c.execute('DELETE FROM sessions WHERE token=?',(token,))
+                    return self.reply(200, {'ok':True},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 u = c.execute('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?',(token,time.time())).fetchone()
+                if path == '/api/session/start' and self.command == 'POST':
+                    if u and token.startswith('auto.'):
+                        return self.reply(200, {'automatic':True})
+                    # Each new document explicitly ends a previous ordinary session,
+                    # even if a browser restores its session cookie after being closed.
+                    c.execute('DELETE FROM sessions WHERE token=?',(token,))
+                    return self.reply(200, {'automatic':False},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 if not u: return self.reply(401, {'error':'请先登录'})
                 uid = u['id']
-                if path == '/api/logout' and self.command == 'POST':
-                    c.execute('DELETE FROM sessions WHERE token=?',(token,)); return self.reply(200, {'ok':True},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 if path == '/api/state' and self.command == 'GET':
                     courses=[]
                     for row in c.execute('SELECT id,title,url,description,source,local_key,category,curriculum_key FROM courses WHERE user_id=? AND archived=0 ORDER BY CASE source WHEN \'user\' THEN 0 ELSE 1 END,id',(uid,)):
@@ -418,12 +435,15 @@ class Handler(BaseHTTPRequestHandler):
                     else:return self.reply(405, {'error':'不支持的操作'})
                     c.commit()
                     return self.reply(200,result)
-                if path in ('/api/language-practice','/api/language-practice/review','/api/language-settings'):
+                if path in ('/api/language-practice','/api/language-practice/review','/api/language-practice/next','/api/language-settings'):
                     query={key:values[-1] for key,values in parse_qs(urlsplit(self.path).query).items()}
                     if path=='/api/language-practice' and self.command=='GET':
                         result=language_learning.daily(c,uid,query)
                     elif path=='/api/language-practice/review' and self.command=='GET':
                         result=language_learning.reviews(c,uid,query)
+                    elif path=='/api/language-practice/next' and self.command=='POST':
+                        c.execute('BEGIN IMMEDIATE')
+                        result=language_learning.next_daily(c,uid,data)
                     elif path=='/api/language-practice' and self.command=='PATCH':
                         c.execute('BEGIN IMMEDIATE')
                         result=language_learning.save_answer(c,uid,data)

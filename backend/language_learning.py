@@ -51,6 +51,7 @@ def init(c):
         CREATE TABLE IF NOT EXISTS language_daily_sets(
             user_id INTEGER NOT NULL, language TEXT NOT NULL, level TEXT NOT NULL,
             day TEXT NOT NULL, direction TEXT NOT NULL, questions TEXT NOT NULL,
+            rotation INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(user_id,language,level,day,direction));
         CREATE TABLE IF NOT EXISTS language_answers(
             user_id INTEGER NOT NULL, language TEXT NOT NULL, level TEXT NOT NULL,
@@ -63,6 +64,9 @@ def init(c):
         CREATE INDEX IF NOT EXISTS language_answer_history
             ON language_answers(user_id,language,updated_at DESC);
     ''')
+    set_columns = {row['name'] for row in c.execute('PRAGMA table_info(language_daily_sets)')}
+    if 'rotation' not in set_columns:
+        c.execute('ALTER TABLE language_daily_sets ADD COLUMN rotation INTEGER NOT NULL DEFAULT 0')
     answer_columns = {row['name'] for row in c.execute('PRAGMA table_info(language_answers)')}
     if 'grading' not in answer_columns:
         c.execute("ALTER TABLE language_answers ADD COLUMN grading TEXT NOT NULL DEFAULT ''")
@@ -190,7 +194,7 @@ def bank(language, level):
     return content, selected
 
 
-def compose_questions(language, level, direction, day):
+def compose_questions(language, level, direction, day, rotation=0):
     content, selected = bank(language, level)
     points = selected.get('points', [])
     # Interleave knowledge points before variants. Consecutive days draw the
@@ -203,7 +207,7 @@ def compose_questions(language, level, direction, day):
     if not pairs:
         return []
     ordinal = date.fromisoformat(day).toordinal()
-    offset = (ordinal - date(2026, 1, 1).toordinal()) * 5
+    offset = (ordinal - date(2026, 1, 1).toordinal() + rotation) * 5
     result = []
     target_name = '韩语' if language == 'korean' else '英语'
     for position in range(min(5, len(pairs))):
@@ -237,6 +241,34 @@ def daily_questions(c, uid, language, level, direction, day):
         saved = c.execute('SELECT questions FROM language_daily_sets WHERE user_id=? AND language=? AND level=? AND day=? AND direction=?', args).fetchone()
         return json.loads(saved['questions'])
     return []
+
+
+def next_daily(c, uid, data):
+    """Persist another finite-bank group, without rewriting saved answer snapshots."""
+    if not isinstance(data, dict) or set(data) - {'language', 'level', 'direction', 'day'}:
+        raise ValueError('换题参数无效')
+    if any(not isinstance(value, str) for value in data.values()):
+        raise ValueError('换题语言、级别、方向和日期应为文本')
+    language, level, direction, day = validate_selection(data)
+    old = daily_questions(c, uid, language, level, direction, day)
+    args = (uid, language, level, day, direction)
+    if old:
+        # Acquire SQLite's write lock before reading the incremented cursor, so
+        # concurrent devices never select from the same stale rotation value.
+        c.execute('UPDATE language_daily_sets SET rotation=rotation+1 WHERE user_id=? AND language=? AND level=? AND day=? AND direction=?', args)
+        rotation = c.execute('SELECT rotation FROM language_daily_sets WHERE user_id=? AND language=? AND level=? AND day=? AND direction=?', args).fetchone()['rotation']
+        questions = compose_questions(language, level, direction, day, rotation)
+        c.execute('UPDATE language_daily_sets SET questions=? WHERE user_id=? AND language=? AND level=? AND day=? AND direction=?',
+                  (json.dumps(questions, ensure_ascii=False, separators=(',', ':')), *args))
+    else:
+        questions = []
+    result = daily(c, uid, data)
+    old_ids = {item['id'] for item in old}
+    new_count = sum(item['id'] not in old_ids for item in questions)
+    result['changed'] = bool(new_count)
+    result['refresh_message'] = ('已切换下一组，新增 %s 道题。题库有限，会按顺序循环；已保存答案仍在「练习记录」。' % new_count
+                                 if new_count else '当前级别可用题目已覆盖，本次已同步进度。题库有限，会循环复习；已保存答案不会清除。')
+    return result
 
 
 GRADING_ENGINE = 'reference-v1'
@@ -537,6 +569,14 @@ def save_answer(c, uid, data):
         raise ValueError('请先写下答案，再点击批改')
     question = next((item for item in daily_questions(c, uid, language, level, direction, day)
                      if item['id'] == exercise_id), None)
+    if question is None and old is not None:
+        # A saved answer owns a server-authored snapshot even after its daily
+        # group has been rotated. History edits must not depend on today's set.
+        snapshot = json.loads(old['question'])
+        if (isinstance(snapshot, dict) and snapshot.get('id') == exercise_id
+                and snapshot.get('language') == language and snapshot.get('level') == level
+                and snapshot.get('day') == day and snapshot.get('practice_direction') == direction):
+            question = snapshot
     if question is None:
         raise ValueError('这道题不属于所选日期、级别或方向')
     if has_manual_result:
