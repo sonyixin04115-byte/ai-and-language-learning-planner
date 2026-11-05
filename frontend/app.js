@@ -1,5 +1,17 @@
 const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const API='http://127.0.0.1:8001/api';
+// Keep modal forms inside the visible area when an iPad keyboard opens.
+function fitDialogViewport(){
+ const viewport=window.visualViewport,style=document.documentElement?.style;
+ if(!viewport||!style)return;
+ style.setProperty('--dialog-viewport-height',Math.max(1,Math.floor(viewport.height))+'px');
+ style.setProperty('--dialog-viewport-top',Math.max(0,Math.floor(viewport.offsetTop))+'px');
+}
+if(window.visualViewport){
+ window.visualViewport.addEventListener('resize',fitDialogViewport,{passive:true});
+ window.visualViewport.addEventListener('scroll',fitDialogViewport,{passive:true});
+ fitDialogViewport();
+}
 function ds(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 const today=()=>ds(new Date());
 function shift(day,n){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+n);return ds(d)}
