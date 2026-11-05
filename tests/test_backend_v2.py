@@ -50,17 +50,18 @@ class BackendTests(unittest.TestCase):
 
     def assert_default_courses(self):
         courses=self.state()['courses']
-        self.assertEqual(len(courses),10)
+        self.assertEqual(len(courses),11)
         ai=[course for course in courses if course['category']=='ai']
-        self.assertEqual(len(ai),4)
+        self.assertEqual(len(ai),5)
         self.assertEqual({(course['title'],course['url']) for course in ai if course['curriculum_key'] is None},{
             ('Python 中文教程','https://docs.python.org/zh-cn/3/tutorial/'),
             ('scikit-learn 入门指南','https://scikit-learn.org/stable/getting_started.html'),
             ('动手学深度学习','https://zh.d2l.ai/')})
-        video=next(course for course in ai if course['curriculum_key']=='ai-intro-xmu-video')
-        self.assertEqual(video['instruction_language'],'中文讲解')
-        self.assertEqual(video['video_count'],119)
-        self.assertEqual(video['trackable_count'],119)
+        self.assertNotIn('ai-intro-xmu-video',{course['curriculum_key'] for course in ai})
+        video=next(course for course in ai if course['curriculum_key']=='ai-cv-d2l-selected')
+        self.assertEqual((video['video_count'],video['trackable_count']),(13,13))
+        apollo=next(course for course in ai if course['curriculum_key']=='ai-autodriving-apollo-intro')
+        self.assertEqual(apollo['trackable_count'],17)
         self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='english'},
             {'english-system-b2','english-academic-openlearn','english-zh-ielts-dut','english-zh-ielts-sun-32'})
         english_main=next(course for course in courses if course['curriculum_key']=='english-zh-ielts-sun-32')
@@ -70,7 +71,7 @@ class BackendTests(unittest.TestCase):
             {'korean-chongya','korean-hanyuup'})
         self.assertEqual({course['category'] for course in courses},{'ai','english','korean'})
         recommended=[course for course in courses if course['category'] in ('ai','english')]
-        self.assertEqual(len(recommended),8)
+        self.assertEqual(len(recommended),9)
         self.assertEqual({course['source_label'] for course in recommended},{'补充推荐'})
         self.assertEqual({course['source'] for course in recommended},{'supplement'})
         korean=[course for course in courses if course['category']=='korean']
