@@ -1,0 +1,11 @@
+{
+  "verified_on": "2026-11-05",
+  "login_fields_verified_on": "2026-11-05",
+  "login_fields_source": "Public HTTPS GET https://www.pythonanywhere.com/login/ (input names/IDs only, no CSRF values retained)",
+  "expected_username": "yixin666",
+  "expected_domain": "yixin666.pythonanywhere.com",
+  "renewal_path": "/user/yixin666/webapps/yixin666.pythonanywhere.com/extend",
+  "target_selector": "form[action=\"/user/yixin666/webapps/yixin666.pythonanywhere.com/extend\"]",
+  "expiry_selector": "p.webapp_expiry:visible",
+  "renew_button_name": "Run until 1 month from today"
+}

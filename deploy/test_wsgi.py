@@ -1,5 +1,6 @@
 """No web accounts, external servers, or real user database are used."""
 from http.cookies import SimpleCookie
+from contextlib import closing
 import io
 import json
 from pathlib import Path
@@ -78,6 +79,71 @@ class WSGITests(unittest.TestCase):
             _,headers=self.signup()
         parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
         self.assertTrue(parsed['session']['secure'])
+
+    def test_manual_login_requires_password_after_a_new_document(self):
+        cookie,headers=self.signup()
+        parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
+        self.assertEqual(parsed['session']['max-age'],'')
+        self.assertEqual(self.request('/api/state',cookie=cookie)[0],200)
+        status,headers,body=self.request('/api/session/start','POST',cookie=cookie)
+        self.assertEqual(status,200)
+        self.assertEqual(json.loads(body),{'automatic':False})
+        self.assertIn('Max-Age=0',headers['Set-Cookie'])
+        self.assertEqual(self.request('/api/state',cookie=cookie)[0],401)
+        with closing(sqlite3.connect(self.db)) as c:
+            self.assertEqual(c.execute('SELECT count(*) FROM sessions').fetchone()[0],0)
+
+    def test_automatic_login_is_explicit_and_server_verified(self):
+        self.signup()
+        for value in ('true',1,[],None):
+            status,_,_=self.request('/api/login','POST',{'username':'test-student','password':'TestingOnly123','auto_login':value})
+            self.assertEqual(status,400)
+        status,headers,_=self.request('/api/login','POST',{'username':'test-student','password':'TestingOnly123','auto_login':True})
+        self.assertEqual(status,200)
+        parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
+        self.assertEqual(parsed['session']['max-age'],'604800')
+        cookie='session='+parsed['session'].value
+        for _ in range(2):
+            status,_,body=self.request('/api/session/start','POST',cookie=cookie)
+            self.assertEqual((status,json.loads(body)),(200,{'automatic':True}))
+            self.assertEqual(self.request('/api/state',cookie=cookie)[0],200)
+        forged='session=auto.'+parsed['session'].value.removeprefix('auto.')+'tampered'
+        status,_,body=self.request('/api/session/start','POST',cookie=forged)
+        self.assertEqual((status,json.loads(body)),(200,{'automatic':False}))
+
+    def test_legacy_and_expired_auto_tokens_do_not_restore(self):
+        self.signup()
+        with closing(sqlite3.connect(self.db)) as c, c:
+            c.execute('INSERT INTO sessions VALUES(?,?,?)',('legacy-token',1,9999999999))
+            c.execute('INSERT INTO sessions VALUES(?,?,?)',('auto.expired-token',1,1))
+        for token in ('legacy-token','auto.expired-token'):
+            status,_,body=self.request('/api/session/start','POST',cookie='session='+token)
+            self.assertEqual((status,json.loads(body)),(200,{'automatic':False}))
+            self.assertEqual(self.request('/api/state',cookie='session='+token)[0],401)
+            with closing(sqlite3.connect(self.db)) as c:
+                self.assertEqual(c.execute('SELECT count(*) FROM sessions WHERE token=?',(token,)).fetchone()[0],0)
+
+    def test_turning_off_auto_replaces_only_this_device_and_logout_is_idempotent(self):
+        self.signup()
+        def login(automatic,cookie=None):
+            status,headers,_=self.request('/api/login','POST',{'username':'test-student','password':'TestingOnly123','auto_login':automatic},cookie=cookie)
+            self.assertEqual(status,200)
+            parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
+            return 'session='+parsed['session'].value,parsed['session']['max-age']
+        device_a,_=login(True)
+        device_b,_=login(True)
+        manual,max_age=login(False,device_a)
+        self.assertEqual(max_age,'')
+        self.assertEqual(self.request('/api/state',cookie=device_a)[0],401)
+        self.assertEqual(self.request('/api/state',cookie=manual)[0],200)
+        self.assertEqual(self.request('/api/state',cookie=device_b)[0],200)
+        for _ in range(2):
+            status,headers,_=self.request('/api/logout','POST',cookie=manual)
+            self.assertEqual(status,200)
+            self.assertIn('Max-Age=0',headers['Set-Cookie'])
+        self.assertEqual(self.request('/api/state',cookie=manual)[0],401)
+        self.assertEqual(self.request('/api/state',cookie=device_b)[0],200)
+        self.assertEqual(self.request('/api/logout','POST')[0],200)
 
     def test_language_query_parameters_reach_the_shared_backend_and_persist(self):
         cookie,_=self.signup()
