@@ -888,14 +888,14 @@ class PublishedLanguageContentTests(unittest.TestCase):
 
     def test_complete_english_routes_and_two_user_korean_portals_are_not_duplicated(self):
         courses = learning.course_catalog()
-        self.assertEqual(len(courses), 9)
+        self.assertEqual(len(courses), 8)
         self.assertEqual(sum(course['category']=='english' for course in courses), 4)
         self.assertEqual(sum(course['category']=='korean' for course in courses), 2)
-        self.assertEqual(sum(course['category']=='ai' for course in courses), 3)
-        self.assertEqual(len({course['key'] for course in courses}), 9)
+        self.assertEqual(sum(course['category']=='ai' for course in courses), 2)
+        self.assertEqual(len({course['key'] for course in courses}), 8)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 263)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 263)
+        self.assertEqual(len(units), 144)
+        self.assertEqual(len({lesson['id'] for lesson in units}), 144)
         original = [course for course in courses if course['key'] in ('english-system-b2','english-academic-openlearn')]
         original_units = [lesson for course in original for lesson in course['lessons']]
         self.assertEqual(len(original_units), 49)
@@ -929,18 +929,56 @@ class PublishedLanguageContentTests(unittest.TestCase):
         guides = learning.read_json('english_lesson_guides.json')['lessons']
         self.assertEqual(set(guides), {lesson['id'] for lesson in original_units})
         self.assertTrue(all(value['zh_title'] and value['zh_guide'] for value in guides.values()))
-        ai = next(course for course in courses if course['category']=='ai')
-        self.assertEqual(ai['key'], 'ai-intro-xmu-video')
-        self.assertEqual(ai['instruction_language'], '中文讲解')
-        self.assertEqual(len(ai['lessons']), 119)
-        self.assertTrue(all(item['unit_type']=='video' and item['url'].startswith('https://www.bilibili.com/video/') for item in ai['lessons']))
-        self.assertEqual(len({item['url'] for item in ai['lessons']}), 119)
+        self.assertNotIn('ai-intro-xmu-video', {course['key'] for course in courses})
+        cv = next(course for course in courses if course['key']=='ai-cv-d2l-selected')
+        self.assertEqual(cv['instruction_language'], '中文讲解')
+        self.assertTrue(all(item['unit_type']=='video' and item['url'].startswith('https://www.bilibili.com/video/') for item in cv['lessons']))
+        self.assertEqual(len({item['url'] for item in cv['lessons']}), 13)
+        apollo = next(course for course in courses if course['key']=='ai-autodriving-apollo-intro')
+        self.assertTrue(all(item['unit_type']=='topic' and item['url']==apollo['url'] for item in apollo['lessons']))
+        self.assertEqual(app.course_metadata({'curriculum_key':apollo['key']})['video_count'], 0)
+        self.assertEqual(app.course_metadata({'curriculum_key':apollo['key']})['unit_label'], '课题')
         self.assertEqual({course['key']: len(course['lessons']) for course in courses if course['category']=='ai'},
-                         {'ai-intro-xmu-video':119, 'ai-cv-d2l-selected':13, 'ai-autodriving-apollo-intro':17})
+                         {'ai-cv-d2l-selected':13, 'ai-autodriving-apollo-intro':17})
         for course in courses:
             if course['category']=='korean':
                 self.assertEqual(course['lessons'], [])
                 self.assertEqual(course['source'], 'user')
+
+    def test_removed_intro_is_not_seeded_and_archived_progress_is_preserved(self):
+        # Use only a disposable database: an archived recommendation can retain
+        # learner notes and progress even after its factory catalogue is removed.
+        with sqlite3.connect(':memory:') as c:
+            c.row_factory = sqlite3.Row
+            c.executescript('''
+                CREATE TABLE users(id INTEGER PRIMARY KEY);
+                INSERT INTO users VALUES(1);
+                INSERT INTO users VALUES(2);
+                CREATE TABLE courses(id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL,
+                    title TEXT NOT NULL,url TEXT DEFAULT '',description TEXT DEFAULT '',
+                    source TEXT DEFAULT 'user',archived INTEGER DEFAULT 0,local_key TEXT,
+                    category TEXT NOT NULL DEFAULT 'ai',curriculum_key TEXT);
+                CREATE TABLE lesson_progress(user_id INTEGER NOT NULL,course_id INTEGER NOT NULL,
+                    lesson_id TEXT NOT NULL,completed_at REAL NOT NULL,
+                    PRIMARY KEY(user_id,course_id,lesson_id));
+            ''')
+            c.execute('INSERT INTO courses(id,user_id,title,url,description,source,archived,curriculum_key) '
+                      'VALUES(42,1,?,?,?,?,1,?)',
+                      ('My prior course title', 'https://www.bilibili.com/video/BV1DQmsB6ENX/',
+                       'Learner notes that must survive removal', 'user', 'ai-intro-xmu-video'))
+            c.execute('INSERT INTO lesson_progress VALUES(1,42,?,?)', ('xmu-ai-BV1DQmsB6ENX', 123456.0))
+            original_course = tuple(c.execute('SELECT * FROM courses WHERE id=42').fetchone())
+            original_progress = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+            learning.init(c)
+            learning.seed_courses(c, 1)
+            learning.seed_courses(c, 2)
+            self.assertEqual(tuple(c.execute('SELECT * FROM courses WHERE id=42').fetchone()), original_course)
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], original_progress)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=1 AND archived=0').fetchone()[0], 8)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=2').fetchone()[0], 8)
+            self.assertEqual(c.execute('SELECT count(*) FROM courses WHERE user_id=2 AND curriculum_key=?',
+                                      ('ai-intro-xmu-video',)).fetchone()[0], 0)
+            self.assertIsNone(learning.external_lessons({'curriculum_key': 'ai-intro-xmu-video'}))
 
     def test_daily_sentences_are_stable_and_change_on_consecutive_days_at_every_level(self):
         for language, levels in learning.LANGUAGES.items():
