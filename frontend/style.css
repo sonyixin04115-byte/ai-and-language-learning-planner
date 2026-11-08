@@ -22,3 +22,12 @@
  #app .task-table input[data-toggle],#app .lesson-table input[data-lesson-done]{width:44px;height:44px;margin:0}
  body dialog[open]{top:calc(var(--dialog-viewport-top,0px) + 12px);bottom:auto;margin:0 auto;max-height:min(90vh,calc(var(--dialog-viewport-height,100vh) - 24px));overscroll-behavior:contain;scroll-padding-block:16px}
 }
+
+/* Rest dates keep their plans and actual effort visible. */
+.rest-day-toggle{border-color:#c6d8cb;color:#28684f;white-space:nowrap}
+.rest-day-toggle.is-rest-day{background:#edf5ec;border-color:#8fb59b}
+.rest-day-pill{background:#e7f0e2;color:#396b46}
+.rest-day-banner{padding:18px 22px;margin:0 0 18px;border:1px solid #d6e3d0;border-radius:10px;background:#eef5e8;color:#375d3f;overflow-wrap:anywhere}
+.rest-day-banner strong{font-size:17px}.rest-day-banner p{margin:6px 0;font-size:14px}.rest-day-banner small{display:block;line-height:1.8;color:#687c64}
+.task-action-buttons .task-reset{color:#6b6950;white-space:nowrap}
+@media(max-width:700px){.rest-day-toggle{min-height:44px}.rest-day-banner{padding:16px}.daily-task-card .toolbar .rest-day-toggle{order:3;flex:1 1 100%}}
