@@ -31,3 +31,11 @@
 .rest-day-banner strong{font-size:17px}.rest-day-banner p{margin:6px 0;font-size:14px}.rest-day-banner small{display:block;line-height:1.8;color:#687c64}
 .task-action-buttons .task-reset{color:#6b6950;white-space:nowrap}
 @media(max-width:700px){.rest-day-toggle{min-height:44px}.rest-day-banner{padding:16px}.daily-task-card .toolbar .rest-day-toggle{order:3;flex:1 1 100%}}
+
+/* Rest is centered in the task workspace; the saved task table remains available. */
+.daily-task-card .rest-day-center{position:relative;display:grid;place-items:center;min-height:max(360px,48vh);padding:32px 20px;margin:0;border-radius:8px;background:#f1f6ed;text-align:center}
+.daily-task-card .rest-day-center strong{display:block;font-size:clamp(80px,11vw,128px);font-weight:750;line-height:1.15;letter-spacing:.12em;text-indent:.12em;color:#3f7258}
+.rest-day-center-note{position:absolute;right:20px;bottom:20px;left:20px;max-width:680px;margin:auto}
+.rest-day-center-note p{margin:0 0 5px;font-size:13px;line-height:1.8;color:#6b7e6e}.rest-day-center-note small{font-size:12px}
+.rest-day-task-details{margin-top:14px}.rest-day-task-details>summary{width:fit-content;max-width:100%;min-height:44px;padding:10px 2px;color:#496c55;font-size:14px;cursor:pointer;overflow-wrap:anywhere}.rest-day-task-details[open]>.table-scroll{margin-top:10px}
+@media(max-width:700px){.daily-task-card .rest-day-center{min-height:360px;padding-inline:16px}.daily-task-card .rest-day-center strong{font-size:clamp(76px,16vw,104px)}.rest-day-center-note{right:16px;left:16px;bottom:18px}}
