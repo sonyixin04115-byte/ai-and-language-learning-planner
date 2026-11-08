@@ -49,6 +49,7 @@ def init():
         CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY, user_id INTEGER, day TEXT, title TEXT, category TEXT, planned INTEGER, actual INTEGER DEFAULT 0, done INTEGER DEFAULT 0, note TEXT DEFAULT '', archived INTEGER DEFAULT 0, created_source TEXT DEFAULT 'manual');
         CREATE TABLE IF NOT EXISTS courses(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, url TEXT DEFAULT '', description TEXT DEFAULT '', source TEXT DEFAULT 'user', archived INTEGER DEFAULT 0, local_key TEXT);
         CREATE TABLE IF NOT EXISTS lesson_progress(user_id INTEGER NOT NULL, course_id INTEGER NOT NULL, lesson_id TEXT NOT NULL, completed_at REAL NOT NULL, PRIMARY KEY(user_id,course_id,lesson_id));
+        CREATE TABLE IF NOT EXISTS rest_days(user_id INTEGER NOT NULL, day TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(user_id,day));
         CREATE TABLE IF NOT EXISTS course_defaults(user_id INTEGER PRIMARY KEY);''')
         user_columns={row['name'] for row in c.execute('PRAGMA table_info(users)')}
         if 'avatar' not in user_columns:c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
@@ -247,33 +248,37 @@ def paused_duration(pauses,start,finish):
 def paused_seconds(pauses,start,finish):
     return paused_duration(pauses,start,finish).total_seconds()
 
-def task_timing(data, old=None, done=False):
+def task_timing(data, old=None, done=False, *, moment=None):
     """Calculate active time, with pause actions and history committed together."""
     if not isinstance(data,dict):raise ValueError('任务数据需为对象')
     reserved={'pause_history','pause_intervals','paused_at','paused_ms','paused_seconds','pause_count'}
     if reserved.intersection(data):raise ValueError('暂停记录由计时操作自动保存，不能手动修改')
+    action=data.get('action')
+    if 'action' in data:
+        if action not in ('start','pause','resume','reset') or set(data)!={'action'}:raise ValueError('计时操作请单独提交 action:start、pause、resume 或 reset')
+        # Reset changes only the clock, including old manually recorded minutes.
+        # Do not parse old timing here: reset can also clear an invalid old clock.
+        if action=='reset':return None,None,0,[]
     old=dict(old) if old is not None else {}
     pauses=read_pause_history(old.get('pause_history','[]'))
     start=task_time(data.get('started_at',old.get('started_at')),'开始时间')
     finish=task_time(data.get('finished_at',old.get('finished_at')),'结束时间')
-    action=data.get('action')
     if 'action' in data:
-        if action not in ('start','pause','resume') or set(data)!={'action'}:raise ValueError('计时操作请单独提交 action:start、pause 或 resume')
         if old.get('done'):raise ValueError('已完成任务请先取消完成，再开始计时')
         if action=='start':
-            if start is None:start=now_utc()
+            if start is None:start=moment if moment is not None else now_utc()
         else:
             if start is None or finish is not None:raise ValueError('请先开始一个尚未结束的任务')
             open_pause=pauses[-1] if pauses and pauses[-1]['finished_at'] is None else None
             if action=='pause' and open_pause is None:
-                moment=now_utc()
-                if moment<start or (pauses and moment<pauses[-1]['finished_at']):raise ValueError('当前时间早于已有计时记录')
+                action_time=moment if moment is not None else now_utc()
+                if action_time<start or (pauses and action_time<pauses[-1]['finished_at']):raise ValueError('当前时间早于已有计时记录')
                 if len(pauses)>=2048:raise ValueError('暂停次数过多，请分开记录任务')
-                pauses.append({'started_at':moment,'finished_at':None})
+                pauses.append({'started_at':action_time,'finished_at':None})
             elif action=='resume' and open_pause is not None:
-                moment=now_utc()
-                if moment<open_pause['started_at']:raise ValueError('当前时间早于暂停开始时间')
-                open_pause['finished_at']=moment
+                action_time=moment if moment is not None else now_utc()
+                if action_time<open_pause['started_at']:raise ValueError('当前时间早于暂停开始时间')
+                open_pause['finished_at']=action_time
     # Old completed records may have only a start and manually recorded minutes.
     # Editing their text must not invent an end time or erase their saved effort.
     if done and old.get('done') and start is not None and finish is None and not {'started_at','finished_at'}.intersection(data):
@@ -300,6 +305,30 @@ def task_timing(data, old=None, done=False):
     else:actual=int(data.get('actual',old.get('actual',0)))
     if not 0<=actual<=1440:raise ValueError('用时应为 0–1440 分钟')
     return serialize_task_time(start),serialize_task_time(finish),actual,serialize_pause_history(pauses)
+
+def set_rest_day(c, uid, data):
+    """Set one owner's day flag and pause that day's active clocks atomically."""
+    if not isinstance(data,dict) or set(data)!={'day','rest'}:raise ValueError('请单独提交休息日期和休息状态')
+    day=data['day'];rest=data['rest']
+    if not isinstance(day,str) or len(day)!=10 or date.fromisoformat(day).isoformat()!=day:raise ValueError('日期需为 YYYY-MM-DD 格式')
+    if not isinstance(rest,bool):raise ValueError('休息状态应为 true 或 false')
+    if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
+    if not rest:
+        c.execute('DELETE FROM rest_days WHERE user_id=? AND day=?',(uid,day))
+        return {'ok':True,'rest':False,'paused_tasks':0}
+    if c.execute('SELECT 1 FROM rest_days WHERE user_id=? AND day=?',(uid,day)).fetchone():
+        return {'ok':True,'rest':True,'paused_tasks':0}
+    moment=now_utc();paused_count=0
+    rows=c.execute("SELECT * FROM tasks WHERE user_id=? AND day=? AND archived=0 AND done=0 AND started_at IS NOT NULL AND started_at<>'' AND (finished_at IS NULL OR finished_at='') ORDER BY id",(uid,day)).fetchall()
+    for old in rows:
+        pauses=read_pause_history(old['pause_history'])
+        if pauses and pauses[-1]['finished_at'] is None:continue
+        started_at,finished_at,actual,pauses=task_timing({'action':'pause'},old,False,moment=moment)
+        c.execute('UPDATE tasks SET started_at=?,finished_at=?,actual=?,pause_history=? WHERE id=? AND user_id=?',
+                  (started_at,finished_at,actual,json.dumps(pauses,separators=(',',':')),old['id'],uid))
+        paused_count+=1
+    c.execute('INSERT INTO rest_days(user_id,day,created_at) VALUES(?,?,?)',(uid,day,serialize_task_time(moment)))
+    return {'ok':True,'rest':True,'paused_tasks':paused_count}
 
 def archive_template(c, user):
     """Archive untouched old template rows; keep all work and manual differences."""
@@ -400,6 +429,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply(200, {'automatic':False},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 if not u: return self.reply(401, {'error':'请先登录'})
                 uid = u['id']
+                if path == '/api/days/rest':
+                    if self.command != 'POST':return self.reply(405, {'error':'不支持的操作'})
+                    result=set_rest_day(c,uid,data)
+                    c.commit()
+                    return self.reply(200,result)
                 if path == '/api/state' and self.command == 'GET':
                     courses=[]
                     for row in c.execute('SELECT id,title,url,description,source,local_key,category,curriculum_key FROM courses WHERE user_id=? AND archived=0 ORDER BY CASE source WHEN \'user\' THEN 0 ELSE 1 END,id',(uid,)):
@@ -407,7 +441,7 @@ class Handler(BaseHTTPRequestHandler):
                     tasks=[]
                     for row in c.execute('SELECT id,day,title,category,planned,actual,done,note,created_source,started_at,finished_at,pause_history FROM tasks WHERE user_id=? AND archived=0 ORDER BY day,id',(uid,)):
                         task=dict(row);task['pause_intervals']=serialize_pause_history(read_pause_history(task.pop('pause_history')));tasks.append(task)
-                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start','avatar')}, 'tasks':tasks, 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'language_settings':language_learning.settings(c,uid), 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
+                    return self.reply(200, {'user':{k:u[k] for k in ('username','name','minutes','start','avatar')}, 'tasks':tasks, 'rest_days':[row['day'] for row in c.execute('SELECT day FROM rest_days WHERE user_id=? ORDER BY day',(uid,))], 'archived_task_count':c.execute('SELECT count(*) FROM tasks WHERE user_id=? AND archived=1',(uid,)).fetchone()[0], 'courses':courses, 'language_settings':language_learning.settings(c,uid), 'weeks':[{'title':w[0],'topics':w[1]} for w in WEEKS]})
                 if path == '/api/listening/audio':
                     if self.command not in ('GET','HEAD'):return self.reply(405, {'error':'不支持的操作'})
                     query={key:values[-1] for key,values in parse_qs(urlsplit(self.path).query).items()}
@@ -536,17 +570,22 @@ class Handler(BaseHTTPRequestHandler):
                     elif self.command == 'PATCH':
                         if not isinstance(data,dict):raise ValueError('任务数据需为对象')
                         old = c.execute('SELECT * FROM tasks WHERE id=? AND user_id=?',(tid,uid)).fetchone()
-                        note = str(data.get('note',old['note']))
-                        if len(note)>10000: raise ValueError('笔记最多 10000 字')
-                        done=data.get('done',bool(old['done']))
-                        if not isinstance(done,(bool,int)) or done not in (False,True,0,1):raise ValueError('完成状态应为 true 或 false')
-                        started_at,finished_at,actual,pauses=task_timing(data,old,bool(done))
-                        title = str(data.get('title',old['title'])).strip()
-                        day = date.fromisoformat(data.get('day',old['day'])).isoformat()
-                        planned = int(data.get('planned',old['planned']))
-                        category = str(data.get('category',old['category'])).strip()[:30] or '其他'
-                        if not title or len(title)>200 or not 1<=planned<=600: raise ValueError('请填写任务和 1–600 分钟预计用时')
-                        c.execute('UPDATE tasks SET done=?,actual=?,note=?,title=?,day=?,planned=?,category=?,started_at=?,finished_at=?,pause_history=? WHERE id=? AND user_id=?',(int(bool(done)),actual,note,title,day,planned,category,started_at,finished_at,json.dumps(pauses,separators=(',',':')),tid,uid))
+                        if data.get('action')=='reset':
+                            started_at,finished_at,actual,pauses=task_timing(data,old,bool(old['done']))
+                            c.execute('UPDATE tasks SET actual=?,started_at=?,finished_at=?,pause_history=? WHERE id=? AND user_id=?',
+                                      (actual,started_at,finished_at,json.dumps(pauses,separators=(',',':')),tid,uid))
+                        else:
+                            note = str(data.get('note',old['note']))
+                            if len(note)>10000: raise ValueError('笔记最多 10000 字')
+                            done=data.get('done',bool(old['done']))
+                            if not isinstance(done,(bool,int)) or done not in (False,True,0,1):raise ValueError('完成状态应为 true 或 false')
+                            started_at,finished_at,actual,pauses=task_timing(data,old,bool(done))
+                            title = str(data.get('title',old['title'])).strip()
+                            day = date.fromisoformat(data.get('day',old['day'])).isoformat()
+                            planned = int(data.get('planned',old['planned']))
+                            category = str(data.get('category',old['category'])).strip()[:30] or '其他'
+                            if not title or len(title)>200 or not 1<=planned<=600: raise ValueError('请填写任务和 1–600 分钟预计用时')
+                            c.execute('UPDATE tasks SET done=?,actual=?,note=?,title=?,day=?,planned=?,category=?,started_at=?,finished_at=?,pause_history=? WHERE id=? AND user_id=?',(int(bool(done)),actual,note,title,day,planned,category,started_at,finished_at,json.dumps(pauses,separators=(',',':')),tid,uid))
                     else: return self.reply(405, {'error':'不支持的操作'})
                     c.commit()
                     return self.reply(200, {'ok':True})
