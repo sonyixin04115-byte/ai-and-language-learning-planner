@@ -1,4 +1,5 @@
 """HTTP persistence, server-owned scoring, content and account boundaries."""
+import copy
 import json
 import io
 from pathlib import Path
@@ -282,8 +283,162 @@ class ListeningTests(unittest.TestCase):
         self.assertEqual(self.req('/listening?language=english&level=A1')[0], 400)
         self.assertEqual(self.req('/listening?language=english&level=B2&exercise_id=korean-1-listen-01')[0], 400)
 
+    def test_recording_profile_is_public_but_clients_cannot_replace_it(self):
+        exercise = self.exercise('korean')
+        item = next(x for x in listening.bank()['items'] if x['id'] == exercise['id'])
+        self.assertEqual(exercise['audio_profile'], item['audio_profile'])
+        self.assertEqual(exercise['tts_text'], item['script'])
+        self.assertEqual(exercise['audio_profile']['mode'], 'dialogue')
+        for question in exercise['questions']:
+            self.assertEqual(set(question), {'id', 'prompt', 'options'})
+        payload = self.payload(exercise)
+        forged = {'audio_profile': item['audio_profile'], 'voice': 'untrusted-voice',
+                  'turns': [], 'tts_text': 'A client cannot change the recording.'}
+        for key, value in forged.items():
+            with self.subTest(key=key):
+                self.assertEqual(self.req('/listening', 'POST', {**payload, key: value})[0], 400)
+                self.assertEqual(self.req('/listening/reveal', 'POST', {
+                    'exercise_id': exercise['id'], 'revision': exercise['revision'], key: value})[0], 400)
+        with app.conn() as c:
+            self.assertEqual(c.execute('SELECT count(*) FROM listening_attempts').fetchone()[0], 0)
+            self.assertEqual(c.execute('SELECT count(*) FROM listening_reveals').fetchone()[0], 0)
+
+    def test_profile_only_recording_change_keeps_historical_profile_and_audio(self):
+        exercise = self.exercise('korean')
+        original = next(x for x in listening.bank()['items'] if x['id'] == exercise['id'])
+        old_path, old_bytes = self.wav_fixture(original)
+        saved = self.submit(exercise)
+        old_url = saved['exercise']['audio']['url']
+        aid = saved['saved']['attempt_id']
+        with app.conn() as c:
+            before = [tuple(row) for row in c.execute('SELECT * FROM listening_attempts')]
+        changed_bank = listening.bank()
+        changed = next(x for x in changed_bank['items'] if x['id'] == exercise['id'])
+        changed['audio_profile']['turn_pause_ms'] += 100
+        listening.validate_audio_profile(changed)
+        self.assertEqual(changed['script'], original['script'])
+        self.assertNotEqual(listening.revision(changed), exercise['revision'])
+        new_path, new_bytes = self.wav_fixture(changed, frames=3000)
+        self.assertNotEqual(old_path, new_path)
+        with patch.object(listening, 'bank', return_value=changed_bank):
+            status, current = self.req('/listening?language=korean')
+            self.assertEqual(status, 200, current)
+            self.assertIsNone(current['saved'])
+            self.assertEqual(current['attempt_count'], 1)
+            self.assertEqual(current['exercise']['audio_profile'], changed['audio_profile'])
+            self.assertEqual(self.audio_request(current['exercise']['audio']['url'])[2], new_bytes)
+            # A cached client must reload the new audio identity before submitting.
+            self.assertEqual(self.req('/listening', 'POST', self.payload(exercise))[0], 400)
+            status, historical = self.req('/listening?attempt_id=' + str(aid))
+            self.assertEqual(status, 200, historical)
+            self.assertEqual(historical['exercise']['audio_profile'], original['audio_profile'])
+            self.assertEqual(historical['saved']['score'], 3)
+            self.assertEqual(historical['exercise']['audio']['url'], old_url)
+            self.assertEqual(self.audio_request(old_url)[2], old_bytes)
+            self.assertEqual(self.audio_request(old_url, token=self.other_token)[0], 404)
+        with app.conn() as c:
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM listening_attempts')], before)
+        self.assertEqual(old_path.read_bytes(), old_bytes)
+
+    def test_legacy_snapshot_without_role_metadata_remains_readable_after_upgrade(self):
+        upgraded_bank = listening.bank()
+        legacy_bank = copy.deepcopy(upgraded_bank)
+        original = next(x for x in legacy_bank['items'] if x['id'] == 'korean-1-listen-01')
+        original.pop('audio_profile')
+        listening.validate_audio_profile(original)
+        old_path, old_bytes = self.wav_fixture(original)
+        with patch.object(listening, 'bank', return_value=legacy_bank):
+            legacy = self.exercise('korean')
+            self.assertIsNone(legacy.get('audio_profile'))
+            saved = self.submit(legacy)
+        aid = saved['saved']['attempt_id']
+        old_url = saved['exercise']['audio']['url']
+        with app.conn() as c:
+            before = [tuple(row) for row in c.execute('SELECT * FROM listening_attempts')]
+        current = self.exercise('korean')
+        self.assertNotEqual(current['revision'], legacy['revision'])
+        self.assertEqual(current['audio_profile']['mode'], 'dialogue')
+        status, historical = self.req('/listening?attempt_id=' + str(aid))
+        self.assertEqual(status, 200, historical)
+        self.assertIsNone(historical['exercise'].get('audio_profile'))
+        self.assertEqual(historical['exercise']['tts_text'], original['script'])
+        self.assertEqual(historical['saved']['score'], 3)
+        self.assertEqual(historical['exercise']['audio']['url'], old_url)
+        self.assertEqual(self.audio_request(old_url)[2], old_bytes)
+        self.assertEqual(self.audio_request(old_url, token=self.other_token)[0], 404)
+        with app.conn() as c:
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM listening_attempts')], before)
+        self.assertEqual(old_path.read_bytes(), old_bytes)
+
 
 class ListeningContentTests(unittest.TestCase):
+    def test_versioned_roles_cover_every_stable_exercise_without_reading_labels(self):
+        items = listening.bank()['items']
+        expected_ids = {f'korean-{level}-listen-{index:02d}'
+                        for level in ('1', '2') for index in range(1, 7)}
+        expected_ids |= {f'english-{level}-listen-{index:02d}'
+                         for level in ('B1', 'B2', 'C1') for index in (1, 2)}
+        self.assertEqual({x['id'] for x in items}, expected_ids)
+        counts = {'korean': {'dialogue': 0, 'narration': 0},
+                  'english': {'dialogue': 0, 'narration': 0}}
+        for item in items:
+            with self.subTest(exercise=item['id']):
+                profile = item['audio_profile']
+                listening.validate_audio_profile(item)
+                self.assertEqual(profile['version'], 1)
+                expected_locale = 'ko-KR' if item['language'] == 'korean' else 'en-US'
+                self.assertEqual(profile['locale'], expected_locale)
+                speakers = {x['id']: x for x in profile['speakers']}
+                self.assertEqual(len(speakers), len(profile['speakers']))
+                self.assertTrue(all(x['voice'].startswith(expected_locale + '-') for x in speakers.values()))
+                self.assertTrue(profile['instruction'].strip())
+                turns = profile['turns']
+                self.assertTrue(all(turn['text'].strip() for turn in turns))
+                counts[item['language']][profile['mode']] += 1
+                if profile['mode'] == 'dialogue':
+                    self.assertEqual({x['gender'] for x in speakers.values()}, {'male', 'female'})
+                    self.assertEqual({x['speaker'] for x in turns}, set(speakers))
+                    reconstructed = '\n'.join(speakers[x['speaker']]['label'] + ': ' + x['text'] for x in turns)
+                    for turn in turns:
+                        self.assertFalse(any(turn['text'].startswith(x['label'] + ':')
+                                             for x in speakers.values()))
+                else:
+                    self.assertEqual((len(speakers), len(turns)), (1, 1))
+                    reconstructed = turns[0]['text']
+                self.assertEqual(reconstructed, item['script'])
+        self.assertEqual(counts, {'korean': {'dialogue': 8, 'narration': 4},
+                                  'english': {'dialogue': 3, 'narration': 3}})
+
+    def test_audio_profile_rejects_mismatched_roles_text_locale_and_schema(self):
+        original = next(x for x in listening.bank()['items']
+                        if x['language'] == 'korean' and x['audio_profile']['mode'] == 'dialogue')
+        invalid = []
+
+        def changed(label, mutate):
+            item = copy.deepcopy(original)
+            mutate(item['audio_profile'])
+            invalid.append((label, item))
+
+        for key, value in [('version', True), ('version', 2), ('style', 'english_academic'),
+                           ('locale', 'en-US'), ('mode', 'unrecognized'), ('instruction', ''),
+                           ('turn_pause_ms', -1), ('intro_pause_ms', True), ('ending_pause_ms', 10001)]:
+            changed(key + '=' + repr(value), lambda p, key=key, value=value: p.update({key: value}))
+        changed('unexpected key', lambda p: p.update({'client_voice': 'untrusted'}))
+        changed('missing turns', lambda p: p.pop('turns'))
+        changed('duplicate speaker', lambda p: p['speakers'][1].update({'id': p['speakers'][0]['id']}))
+        changed('same gender pair', lambda p: p['speakers'][1].update({
+            'gender': p['speakers'][0]['gender'], 'voice': p['speakers'][0]['voice']}))
+        changed('wrong locale voice', lambda p: p['speakers'][0].update({'voice': 'en-US-JennyNeural'}))
+        changed('unknown speaker', lambda p: p['turns'][0].update({'speaker': 'unknown'}))
+        changed('changed spoken content', lambda p: p['turns'][0].update({'text': 'Different content.'}))
+        changed('role label accidentally spoken', lambda p: p['turns'][0].update({
+            'text': p['speakers'][0]['label'] + ': ' + p['turns'][0]['text']}))
+        changed('dialogue disguised as narration', lambda p: p.update({'mode': 'narration'}))
+        for label, item in invalid:
+            with self.subTest(case=label):
+                with self.assertRaises((RuntimeError, ValueError)):
+                    listening.validate_audio_profile(item)
+
     def test_original_bank_has_all_required_types_and_valid_book_points(self):
         data = listening.bank()
         self.assertEqual(len(data['items']), 18)
