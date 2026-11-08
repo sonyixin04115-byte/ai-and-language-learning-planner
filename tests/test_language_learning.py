@@ -89,6 +89,34 @@ class LanguageLearningTests(unittest.TestCase):
         self.assertEqual(status, 200, result)
         return result
 
+    def test_regrading_saved_comma_spacing_answer_corrects_verdict_and_preserves_input(self):
+        reference = '교수님, 어느 부분부터 읽을까요?'
+        answer = '교수님,어느 부분부터 읽을까요?'
+        self.write('language_korean.json', {'levels': {'1': {'label': '第1册', 'points': [{
+            'id': 'ko-comma', 'knowledge_point': '-(으)ㄹ까요?',
+            'examples': [{'target': reference, 'zh': '教授，我从哪个部分开始读好呢？'}],
+        }]}}})
+        item = self.daily('2026-11-09', 'to_target', 'owner', 'korean', '1')['items'][0]
+        status, result = self.req('/language-practice', 'PATCH', self.payload(item, answer=answer, review=True))
+        self.assertEqual(status, 200, result)
+        prior = learning.grade_answer(item, answer)
+        prior.update(status='needs_review', label='需复核', feedback=['Previous strict whitespace verdict'])
+        with app.conn() as c:
+            c.execute('UPDATE language_answers SET grading=? WHERE user_id=1 AND exercise_id=?',
+                      (json.dumps(prior, ensure_ascii=False), item['id']))
+        self.assertEqual(self.daily('2026-11-09', 'to_target', 'owner', 'korean', '1')['items'][0]['grading']['status'], 'needs_review')
+        status, result = self.req('/language-practice', 'PATCH', self.payload(item, grade=True))
+        self.assertEqual(status, 200, result)
+        saved = result['item']
+        self.assertEqual(saved['grading']['status'], 'correct')
+        self.assertEqual(saved['answer'], answer)
+        self.assertEqual(saved['grading']['graded_answer'], answer)
+        self.assertIsNone(saved['manual_review'])
+        self.assertFalse(saved['completed'])
+        self.assertTrue(saved['review'])
+        self.assertEqual(self.daily('2026-11-09', 'to_target', 'owner', 'korean', '1')['items'][0]['grading']['status'], 'correct')
+        self.assertEqual(self.history('korean')['items'][0]['grading']['status'], 'correct')
+
     def test_manual_judgment_is_separate_persistent_reversible_and_does_not_set_flags(self):
         item = self.grading_item()
         auto = self.req('/language-practice', 'PATCH', self.payload(item, answer='中国是我的家乡。', grade=True))[1]['item']
@@ -1103,6 +1131,28 @@ class LanguageGradingRulesTests(unittest.TestCase):
                 self.assertEqual(result['reference_answer'], q['model_answer'])
         q['knowledge_point'] = 'A different point'
         self.assertEqual(learning.grade_answer(q, '我是从中国来的')['status'], 'needs_review')
+
+    def test_comma_layout_and_unicode_variants_match_without_erasing_word_boundaries(self):
+        import unicodedata
+        reference = '교수님, 어느 부분부터 읽을까요?'
+        q = self.question(reference, direction='to_target', source='教授，我从哪个部分开始读好呢？', point='-(으)ㄹ까요?')
+        variants = ['교수님,어느 부분부터 읽을까요?', '교수님 , 어느 부분부터 읽을까요?',
+                    '교수님，\u3000어느 부분부터 읽을까요?', '교수님,\u00a0어느 부분부터 읽을까요?',
+                    unicodedata.normalize('NFD', '교수님,어느 부분부터 읽을까요?')]
+        for answer in variants:
+            with self.subTest(answer=answer):
+                result = learning.grade_answer(q, answer)
+                self.assertEqual(result['status'], 'correct')
+                self.assertEqual(result['graded_answer'], answer)
+                self.assertEqual(result['reference_answer'], reference)
+        en = self.question('Professor, could I ask a question?', language='english', direction='to_target')
+        self.assertEqual(learning.grade_answer(en, 'Professor,could I ask a question?')['status'], 'correct')
+        for question, answer in [(q, '교수님 어느 부분부터 읽을까요?'),
+                                 (q, '교수님, 어느부분부터 읽을까요?'),
+                                 (q, '교수님, 어느 부분부터 읽을까요!'),
+                                 (self.question('금액은 1,000원이에요.', direction='to_target'), '금액은 1, 000원이에요.')]:
+            with self.subTest(answer=answer):
+                self.assertEqual(learning.grade_answer(question, answer)['status'], 'needs_review')
 
     def test_single_country_day_number_and_negation_changes_are_not_accepted(self):
         cases = [(self.question(), '我来自韩国', '国家'),
