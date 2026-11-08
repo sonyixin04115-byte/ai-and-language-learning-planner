@@ -80,6 +80,47 @@ class WSGITests(unittest.TestCase):
         parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
         self.assertTrue(parsed['session']['secure'])
 
+    def test_rest_day_and_single_task_reset_persist_through_wsgi_restart(self):
+        cookie,_=self.signup()
+        payload={'day':'2026-11-08','title':'云端自选任务','planned':30,'category':'学习','note':'保留云端笔记','started_at':'2026-11-01T01:00:00Z'}
+        self.assertEqual(self.request('/api/tasks','POST',payload,cookie)[0],201)
+        code,_,body=self.request('/api/state',cookie=cookie)
+        self.assertEqual(code,200)
+        task=json.loads(body)['tasks'][0];tid=task['id']
+        code,_,body=self.request('/api/days/rest','POST',{'day':'2026-11-08','rest':True},cookie)
+        self.assertEqual(code,200)
+        self.assertEqual(json.loads(body),{'ok':True,'rest':True,'paused_tasks':1})
+        restarted=validator(create_app(self.db,ORIGIN))
+        code,_,body=self.request('/api/state',cookie=cookie,app=restarted)
+        state=json.loads(body)
+        self.assertEqual((code,state['runtime'],state['rest_days']),(200,'cloud',['2026-11-08']))
+        self.assertEqual(len(state['tasks'][0]['pause_intervals']),1)
+        self.assertIsNone(state['tasks'][0]['pause_intervals'][0]['finished_at'])
+        self.assertEqual(self.request('/api/days/rest','POST',{'day':'2026-11-08','rest':False},cookie,app=restarted)[0],200)
+        _,_,body=self.request('/api/state',cookie=cookie,app=restarted)
+        self.assertEqual(len(json.loads(body)['tasks'][0]['pause_intervals']),1)
+        self.assertEqual(self.request(f'/api/tasks/{tid}','PATCH',{'action':'reset'},cookie,app=restarted)[0],200)
+        final=validator(create_app(self.db,ORIGIN))
+        code,_,body=self.request('/api/state',cookie=cookie,app=final)
+        state=json.loads(body);saved=state['tasks'][0]
+        self.assertEqual((code,state['rest_days']),(200,[]))
+        self.assertEqual((saved['started_at'],saved['finished_at'],saved['actual'],saved['pause_intervals']),(None,None,0,[]))
+        for field in ('title','day','category','planned','note','done'):
+            self.assertEqual(saved[field],task[field])
+
+    def test_rest_day_wsgi_auth_and_methods_do_not_write(self):
+        cookie,_=self.signup()
+        data={'day':'2026-11-08','rest':True}
+        self.assertEqual(self.request('/api/days/rest','POST',data)[0],401)
+        for method in ('GET','HEAD','PATCH','DELETE'):
+            code,_,body=self.request('/api/days/rest',method,data,cookie)
+            self.assertEqual(code,405)
+            if method=='HEAD':self.assertEqual(body,b'')
+        self.assertEqual(self.request('/api/days/rest','POST',{'day':'20261108','rest':True},cookie)[0],400)
+        self.assertEqual(self.request('/api/days/rest','POST',{'day':'2026-11-08','rest':1},cookie)[0],400)
+        _,_,body=self.request('/api/state',cookie=cookie)
+        self.assertEqual(json.loads(body)['rest_days'],[])
+
     def test_manual_login_requires_password_after_a_new_document(self):
         cookie,headers=self.signup()
         parsed=SimpleCookie();parsed.load(headers['Set-Cookie'])
