@@ -312,6 +312,9 @@ def normalise_grade_text(value, language):
     """Ignore presentation differences while preserving words and punctuation meaning."""
     text = unicodedata.normalize('NFKC', value).translate(str.maketrans({'’': "'", '‘': "'"}))
     text = ' '.join(text.split())
+    # A comma already separates the words. Its surrounding layout spaces do
+    # not change meaning; keep numeric commas and all other word spaces intact.
+    text = re.sub(r'(?<=[^\W\d_])\s*,\s*(?=[^\W\d_])', ',', text)
     if language == 'zh':
         # A B / AB and 3 5 / 35 may be different codes or numbers even in Chinese.
         text = re.sub(r'(?<=[\u3400-\u9fff])\s+(?=[\u3400-\u9fff])', '', text)
@@ -374,7 +377,7 @@ def grade_answer(question, answer, graded_at=None):
     expected, actual = normalise_grade_text(reference, target), normalise_grade_text(answer, target)
     status, feedback = 'needs_review', []
     if expected and actual == expected:
-        status, feedback = 'correct', ['与本题参考表达一致；已忽略安全的句末句号、全半角和普通空白差异。']
+        status, feedback = 'correct', ['与本题参考表达一致；已忽略不影响本题内容的排版差异。']
     elif (expected and target == 'en' and _expand_english_contractions(actual) == _expand_english_contractions(expected)
           and not re.search(r'\bnot (?:only|just)\b', _expand_english_contractions(expected), re.I)):
         status, feedback = 'correct', ['与参考表达等价，区别是常见且含义明确的英语缩略形式。']
