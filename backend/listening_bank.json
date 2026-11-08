@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "notice": "系统原创合成语音听力练习，不是教材原音、真实人物录音或雅思真题。韩语按已核验的延世1—2册初级语法点编写；英语难度为自学标签，不等于考试定级。原文与题目不外发到模型服务。语音由设备/浏览器提供，部分系统语音可能联网合成，以设备设置为准。",
+  "version": 2,
+  "notice": "系统原创合成听力：韩语为TOPIK I风格初级练习，每篇3道单选题，不是完整模拟试卷或官方真题；英语保留B1—C1自学难度。对话由一男一女分角色朗读，短文为单人朗读，含目标语言导语与答题停顿。公开原创文稿由微软语音服务预生成录音；不会上传你的答案、笔记或账号数据。音频不可用时可切换为系统单声朗读。提交后可查看原文、中文翻译与解析。",
   "items": [
     {
       "id": "korean-1-listen-01",
@@ -61,7 +61,49 @@
           "correct": 3,
           "explanation": "“삼백이 호는 옆에 있습니다”中的옆表示旁边。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "학생",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "직원",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "안녕하세요. 여기가 삼백이 호입니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "아니요. 여기는 삼백일 호입니다. 삼백이 호는 옆에 있습니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "감사합니다. 저는 한국어 수업에 갑니다."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네, 한국어 수업은 아홉 시에 시작합니다."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-1-listen-02",
@@ -118,7 +160,49 @@
           "correct": 2,
           "explanation": "“저는 도서관에서 공부해요”直接给出她在图书馆学习的信息。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "수진",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "민수",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "오늘 열두 시에 같이 점심을 먹을까요?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "좋아요. 어디에서 만날까요?"
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "학생 식당 앞에서 만나요. 저는 도서관에서 공부해요."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네. 저는 수업이 있어요. 열두 시에 식당 앞에 갈게요."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-1-listen-03",
@@ -179,7 +263,65 @@
           "correct": 3,
           "explanation": "“2층”表示二楼；工作人员还让学生走楼梯上去。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "학생",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "직원",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "안녕하세요. 저는 새 학생입니다."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "안녕하세요. 학생증이 있습니까?"
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "네, 여기 있습니다. 도서관은 몇 시에 문을 엽니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "아침 아홉 시에 엽니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "토요일에도 아홉 시에 엽니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "아니요. 토요일에는 열 시에 엽니다. 일요일에는 문을 열지 않습니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "알겠습니다. 저는 오늘 한국어 책을 읽고 싶습니다."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "한국어 책은 2층에 있습니다. 계단으로 올라가세요."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-1-listen-04",
@@ -240,7 +382,65 @@
           "correct": 1,
           "explanation": "“카드로 계산해요”表示刷卡结账。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "손님",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "점원",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "안녕하세요. 공책이 있습니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네. 이 파란 공책은 이천 원입니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "저 작은 공책은 얼마입니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "작은 공책은 천 원입니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "저는 작은 공책 두 권하고 검은 펜 한 자루를 사고 싶어요."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "검은 펜은 천오백 원입니다. 모두 삼천오백 원입니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "좋아요. 카드로 계산해요."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네. 여기 공책 두 권과 펜 한 자루가 있습니다."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-1-listen-05",
@@ -305,7 +505,31 @@
           "correct": 3,
           "explanation": "“오늘은 운동하지 않습니다”用否定表达说明今天不运动。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "narration",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "해설",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "저는 중국 학생입니다. 아침 일곱 시에 일어납니다. 아침에는 빵하고 우유를 먹습니다. 아홉 시부터 한국어를 공부합니다. 점심 후에는 도서관에 갑니다. 오늘은 운동하지 않습니다. 저녁에는 친구하고 한국어로 이야기하고 싶습니다."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-1-listen-06",
@@ -366,7 +590,31 @@
           "correct": 3,
           "explanation": "“영어 사전이 없습니다”明确表示没有英语词典，其他物品均有。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "narration",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "해설",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "안녕하세요. 학교 서점에서 안내합니다. 오늘 서점은 오전 열 시부터 오후 다섯 시까지 엽니다. 한국어 교재는 입구 오른쪽에 있습니다. 공책과 펜도 있습니다. 오늘은 영어 사전이 없습니다. 책을 살 때 학생증을 보여 주세요. 내일은 서점이 쉬는 날입니다."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-2-listen-01",
@@ -423,7 +671,49 @@
           "correct": 3,
           "explanation": "“-지 않아도 됩니다”表达“不做也可以”，不等于禁止发送。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "학생",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "교수",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "교수님, 과제에 대해 질문해도 됩니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네. 하지만 지금은 회의가 있습니다. 세 시에 연구실로 오세요."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "감사합니다. 노트북을 가져가야 합니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네. 오류 화면도 준비하세요. 자료를 미리 보내지 않아도 됩니다."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-2-listen-02",
@@ -484,7 +774,49 @@
           "correct": 3,
           "explanation": "教授否定发送给朋友的请求，限定“혼자 복습할 때만”，即仅自己复习时使用。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "학생",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "교수",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "수업을 다시 들으려고 녹음해도 됩니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "오늘 설명은 녹음해도 됩니다. 하지만 다른 학생의 발표는 녹음하면 안 됩니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "네. 녹음 파일을 친구에게 보내도 됩니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "아니요. 혼자 복습할 때만 사용하세요."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-2-listen-03",
@@ -545,7 +877,65 @@
           "correct": 0,
           "explanation": "“자료는 미리 읽어야 해요”说明会前要先读资料。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "지훈",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "수진",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "오늘 네 시에 도서관에서 만나려고 했지요?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "네. 그런데 제가 병원에 가야 해서 조금 늦어요."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "그럼 다섯 시로 바꿀까요?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "좋아요. 도서관은 그 시간에 자리가 없을 것 같아요."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "학생회관 2층 회의실은 어때요?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "거기에서 발표 연습을 해 본 적이 있어요. 조용해요."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "제가 회의실을 예약할게요. 자료는 미리 읽어야 해요."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "알겠어요. 다섯 시에 학생회관 2층에서 만나요."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-2-listen-04",
@@ -614,7 +1004,65 @@
           "correct": 0,
           "explanation": "校内可以，校外用“-으면 안 됩니다”明确禁止。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "dialogue",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "학생",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "직원",
+            "gender": "male",
+            "voice": "ko-KR-InJoonNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "발표를 준비하려고 카메라를 빌리고 싶어요."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "학생증을 보여 주세요. 카메라를 써 본 적이 있습니까?"
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "네. 작년에 한 번 써 봤어요."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "좋습니다. 오늘 빌리면 금요일까지 돌려줘야 합니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "토요일 아침에 반납해도 됩니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "안 됩니다. 토요일에는 사무실이 문을 닫기 때문에 금요일 다섯 시 전에 와야 합니다."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "알겠습니다. 카메라를 밖으로 가져가도 됩니까?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "학교 안에서는 괜찮습니다. 학교 밖으로 가져가면 안 됩니다."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-2-listen-05",
@@ -675,7 +1123,31 @@
           "correct": 3,
           "explanation": "说话人否定逐句翻译，强调“중요한 내용을 먼저 이해”，先抓重要内容。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "narration",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "해설",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "한국에 온 지 두 달이 되었습니다. 처음에는 수업을 듣기가 어려웠습니다. 요즘은 수업 전에 중요한 단어를 찾아봅니다. 수업이 끝나면 친구에게 모르는 내용을 물어봅니다. 모든 문장을 번역하려고 하지는 않습니다. 중요한 내용을 먼저 이해하려고 합니다. 내일은 교수님께 질문을 드려 볼 생각입니다."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "korean-2-listen-06",
@@ -736,7 +1208,31 @@
           "correct": 3,
           "explanation": "最后一句要求不要自行修理，而应联系조교，即助教。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "topik_i_beginner",
+        "mode": "narration",
+        "locale": "ko-KR",
+        "instruction": "다음을 듣고 물음에 답하십시오.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "해설",
+            "gender": "female",
+            "voice": "ko-KR-SunHiNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "이번 주부터 실험실을 쓰려면 먼저 예약해야 합니다. 예약은 전날 오후 여섯 시까지 할 수 있습니다. 음식은 가져오면 안 됩니다. 물은 뚜껑이 있는 병에 담아 오면 됩니다. 사용한 컴퓨터는 나가기 전에 꺼야 합니다. 문제가 생기면 직접 고치려고 하지 말고 조교에게 연락하세요."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "english-B1-listen-01",
@@ -784,7 +1280,31 @@
           "correct": 3,
           "explanation": "by Monday evening表示截止周一晚上。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "english_academic",
+        "mode": "narration",
+        "locale": "en-US",
+        "instruction": "Listen to the passage and answer the three questions.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "Narrator",
+            "gender": "female",
+            "voice": "en-US-JennyNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "Hello, this is a message for students in the Tuesday programming class. My usual office hour is at two, but I have a meeting this week. Please come at half past three instead. Bring your laptop and a short list of questions. You do not need to finish the whole assignment before you visit. If you cannot come on Tuesday, send me an email by Monday evening. Please do not send large video files; a picture of the error message is enough."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "english-B1-listen-02",
@@ -832,7 +1352,57 @@
           "correct": 3,
           "explanation": "only have five minutes to speak直接说明是展示发言的时间限制。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "english_academic",
+        "mode": "dialogue",
+        "locale": "en-US",
+        "instruction": "Listen to the conversation and answer the three questions.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "Maya",
+            "gender": "female",
+            "voice": "en-US-JennyNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "Leo",
+            "gender": "male",
+            "voice": "en-US-GuyNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "Shall we meet in the library at ten tomorrow?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "I have a class until eleven. Could we meet at eleven thirty?"
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "That works. The library room is full, so I booked a room in the science building."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "Great. I have finished the slides, but I have not checked the figures."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "I can check them tonight. Please bring the survey notes."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "Sure. We only have five minutes to speak, so we should practise once before lunch."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "english-B2-listen-01",
@@ -880,7 +1450,31 @@
           "correct": 3,
           "explanation": "not asking for... 后转而强调a simple baseline with a trustworthy evaluation，核心是可靠性而非复杂度。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "english_academic",
+        "mode": "narration",
+        "locale": "en-US",
+        "instruction": "Listen to the passage and answer the three questions.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "Narrator",
+            "gender": "female",
+            "voice": "en-US-JennyNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "Before you celebrate the high accuracy in your report, please check how you prepared the data. One group used information from the entire dataset to choose its features, and only afterwards divided the examples into training and test sets. The code ran successfully, but that sequence made the evaluation unreliable. For next week's meeting, repeat the experiment with all learning steps fitted on the training data alone. Keep the same test set and compare the two results. I am not asking for a more complicated model; a simple baseline with a trustworthy evaluation is more useful at this stage. Bring a brief explanation of what changed, including any drop in accuracy."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "english-B2-listen-02",
@@ -928,7 +1522,57 @@
           "correct": 3,
           "explanation": "最后教授明确说on Sunday evening；不要仅根据“延两天”自行猜测。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "english_academic",
+        "mode": "dialogue",
+        "locale": "en-US",
+        "instruction": "Listen to the conversation and answer the three questions.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "Student",
+            "gender": "male",
+            "voice": "en-US-GuyNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "Professor",
+            "gender": "female",
+            "voice": "en-US-JennyNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "Could we discuss the deadline for my project? The data arrived three days late, although the analysis script was ready on time."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "I can allow two extra days for the written report, but the short presentation will remain on Friday."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "That should help. May I present preliminary results rather than a complete comparison of all the models?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "Yes, provided you label them clearly and explain which checks are still missing. Do not suggest that a small improvement is significant before you have tested it."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "Understood. I will show the baseline and describe the remaining work."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "Good. Send the revised report on Sunday evening, and include a short note separating the delay in collecting data from the time you spent analysing it."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "english-C1-listen-01",
@@ -976,7 +1620,31 @@
           "correct": 3,
           "explanation": "结尾强调identifying patterns和revealing assumptions，而非final verdict。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "english_academic",
+        "mode": "narration",
+        "locale": "en-US",
+        "instruction": "Listen to the passage and answer the three questions.",
+        "speakers": [
+          {
+            "id": "narrator",
+            "label": "Narrator",
+            "gender": "female",
+            "voice": "en-US-JennyNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "narrator",
+            "text": "The pilot study suggests that the new feedback tool may help students revise their explanations more carefully. However, the participants volunteered for an optional workshop, so they were probably more motivated than the average student. We should therefore resist treating the observed improvement as evidence that the tool would benefit everyone equally. In the next phase, I would prioritise recruiting a broader group and documenting how much guidance each participant receives. Increasing the sample size without addressing these differences would make the estimates look more precise while leaving the main interpretation problem unresolved. This does not mean that the pilot was unsuccessful. Its value lies in identifying promising patterns and revealing which assumptions a larger study must test, rather than delivering a final verdict on the tool's effectiveness."
+          }
+        ],
+        "turn_pause_ms": 400,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     },
     {
       "id": "english-C1-listen-02",
@@ -1024,7 +1692,57 @@
           "correct": 3,
           "explanation": "最后两句同时要求limited trial、monitoring、reversible以及提前约定停止条件。"
         }
-      ]
+      ],
+      "audio_profile": {
+        "version": 1,
+        "style": "english_academic",
+        "mode": "dialogue",
+        "locale": "en-US",
+        "instruction": "Listen to the conversation and answer the three questions.",
+        "speakers": [
+          {
+            "id": "speaker_1",
+            "label": "Researcher",
+            "gender": "female",
+            "voice": "en-US-JennyNeural"
+          },
+          {
+            "id": "speaker_2",
+            "label": "Supervisor",
+            "gender": "male",
+            "voice": "en-US-GuyNeural"
+          }
+        ],
+        "turns": [
+          {
+            "speaker": "speaker_1",
+            "text": "The model performs well on the benchmark, so would you recommend deploying it across the whole service next month?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "Not on that evidence alone. The benchmark contains mostly clear, well-lit images, whereas the service receives blurred pictures and poorly framed scenes as well."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "We could collect more examples of those cases and fine-tune the model."
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "That is worth investigating, but first define how you will recognise an unreliable prediction and what the system should do when it encounters one. A fallback process is not a substitute for improving the model, yet it may reduce the consequences of an error while we gather evidence."
+          },
+          {
+            "speaker": "speaker_1",
+            "text": "So you would favour a limited trial with monitoring rather than immediate full deployment?"
+          },
+          {
+            "speaker": "speaker_2",
+            "text": "Exactly. Make the trial reversible, record failure cases, and agree in advance on the conditions under which it should be stopped."
+          }
+        ],
+        "turn_pause_ms": 550,
+        "intro_pause_ms": 1000,
+        "ending_pause_ms": 6000
+      }
     }
   ]
 }

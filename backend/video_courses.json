@@ -133,165 +133,1094 @@
     {
       "key": "ai-autodriving-apollo-intro",
       "category": "ai",
-      "title": "自动驾驶导论 · 百度Apollo官方（17课题）",
+      "title": "自动驾驶技术基础 · 百度Apollo × Udacity（101课）",
       "source": "supplement",
-      "url": "https://apollo.baidu.com/community/online-course/105",
-      "instruction_language": "中文讲解",
+      "url": "https://apollo.baidu.com/community/online-course/1",
+      "instruction_language": "英文原声＋画面中文字幕（已抽样核验）",
       "learning_role": "reference",
-      "description": "【基础配套｜阶段3】\n优先级：P0（当前专业课概念预习）；完整系统实践在深度学习基础之后进行。\n定位：给当前“人工智能与自动驾驶”专业课建立概念地图，不能替代Python、数学、机器学习或视觉主课，也不是强制的新每日计划。\n学校衔接：人工智能与自动驾驶（DAI3008）；先后顺序为自学建议，不作为学校课程学分或正式先修判断。\n课程来源：百度Apollo官方《自动驾驶导论》 https://apollo.baidu.com/community/online-course/105 。公开页面标注17课时、免费，分“apollo原理与实践”11项及“apollo系统实践”6项，本目录保留官网全部17项精确课题名称。\n当前学到：当前仅概念预习：第一课的1、5、6、7、8、9、10、11课题，听懂Apollo整体架构及定位、感知、规划、控制的作用和输入输出即可；与教授本周内容对照。完成Python、数学和PyTorch/CNN后，再按需要学习其余调试/仿真、Cyber RT、地图及第二课六项实践，不要求本阶段刷完17课题。\n暂时跳过：现在不搭完整Apollo开发环境，不照旧教程安装Linux/CUDA或运行车辆，不购买云实验/硬件；未学会基础编程和模型训练前暂缓系统实践。已有Linux课仍是命令行主课，Apollo的Linux课题仅按项目需要查阅。\n达标自测：能画出感知→定位→规划→控制的基本链路，说明每个模块输入、输出及一个失败风险；用中韩术语对照向教授问一个具体问题。后续在条件具备时完成一个仿真/离线小练习，而不是直接操作实车。\n打开方式：本目录17行是官网目录课题，不是17个已验证可直接播放的视频直链。每行均打开同一官方课程页，再在原页“课程目录”选择对应章节和课题“去学习”；完成实际学习后回本网站勾选该行。平台的自动播放状态不与本网站自动同步。\n访问说明：本次核验了公开目录、17课时及免费标识，未逐课验证完整播放和登录后的权限；可能需要百度账号，平台也列有GitHub登录。以官网当前访问条件为准，不保证免注册。当前不报名付费课程、不购买云实验、仿真、证书或设备。\n版本说明：教程中的Apollo、Cyber RT、系统安装与仿真步骤可能来自旧版本，与当前Apollo Studio和教授实验环境不一致。先听模块原理，实践时先确认教授要求和当前官方文档；不直接复制旧版安装/驱动命令。课题“Linux基础入门”与已有命令行课有重合，只作按需查阅，不另要求刷一遍。",
+      "description": "【当前需要学｜自动驾驶概念补课】\n定位：与汉阳ERICA“人工智能与自动驾驶”（DAI3008）的模块术语衔接，先建立概念地图，不能替代Python、数学、机器学习或视觉主课；学习先后是自学建议，不是学校正式先修或学分认定。\n课程来源：百度Apollo与Udacity联合课程《自动驾驶技术基础》 https://apollo.baidu.com/community/online-course/1 。官网标注101课时、免费，面向零基础、无前置知识；按官网8章保留101个真实课时名称。\n当前学到：先学第1章第3、5–9节，理解无人驾驶的定义、运作方式、团队与软硬件架构；接着学第2–7章各模块的简介、作用与课程综述，掌握高精地图、定位、感知、预测、规划、控制的输入输出和关系即可。本阶段不要求连续刷完101节，具体每天学哪些仍由你决定。\n当前不学：当前跳过欢迎辞、纳米学位宣传；先不钻GNSS/惯导、反向传播、RNN、Lattice、LQR和MPC的公式推导或代码细节，不重复已有机器学习/深度学习主课。不在本阶段安装Apollo、Linux/CUDA或操作车辆，也不购买云实验、证书或硬件。\n达标自测：能画出地图与定位、感知、预测、规划、控制之间的关系，为每个模块说清输入、输出及一个失败风险，并结合教授本周内容提出一个具体问题。后续具备Python、数学和模型基础后，再补所需算法与仿真实践。\n授课与字幕：英文原声，已在官网实际播放器抽样核验画面中文字幕；不是全程中文教师讲授。不能把样本播放结果当作全部101节逐课或所有设备、地区的播放保证。先试听，听读速度不合适可放慢并暂停整理中文术语。\n打开方式：课程总入口先打开官网介绍页；每节“在线学习”进入 https://apollo.baidu.com/community/course/outline/1 ，再按本表的章节和课时标题在原站选择。本目录不伪造逐节视频直链，也不搬运、下载或托管原视频；看完后回本系统手动打钩，平台进度不自动同步。\n访问说明：截至2026-11-09已在正常登录的官网浏览器中抽样验证实际播放；官网可能要求百度或GitHub账号，课程平台账号与本学习系统账号不同。免费标识不代表云实验、证书或其他产品全部免费，本系统未替你购买或报名任何付费项目。\n版本与范围：本课用来理解基础模块，不照搬旧Apollo版本的安装、驱动或接口命令。之后需要9.0系统仿真时，再按教授要求查当前官方新人之旅与文档，不另添加一套重复的当前主课。\n旧记录说明：原《自动驾驶导论》17课题因开始学习不可用而替换；原课程ID、个人编辑、归档状态和旧课时完成记录保留。新101课使用独立课时ID，旧17课完成不会自动算成新课完成，新课进度重新计算。",
       "lessons": [
         {
-          "id": "apollo-intro-p1-01",
-          "title": "使用Apollo学习自动驾驶",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-01",
+          "title": "欢迎学习Apollo课程",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-02",
-          "title": "Apollo自动驾驶调试及仿真实践",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-02",
+          "title": "你将学到什么？",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-03",
-          "title": "Apollo Cyber RT模块详解与实践",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-03",
+          "title": "什么是无人驾驶？",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-04",
-          "title": "Apollo 高精地图模块详解与实践",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-04",
+          "title": "Sebastian欢迎辞",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-05",
-          "title": "Apollo 定位模块详解与实践",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-05",
+          "title": "无人驾驶车的运作方式",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-06",
-          "title": "Apollo感知模块详解Ⅰ",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-06",
+          "title": "Apollo团队与架构",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-07",
-          "title": "Apollo感知模块详解Ⅱ",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-07",
+          "title": "参考车辆与硬件平台",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-08",
-          "title": "Apollo规划模块详解Ⅰ",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-08",
+          "title": "开源软件架构",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-09",
-          "title": "Apollo规划模块详解Ⅱ",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-09",
+          "title": "云服务",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-10",
-          "title": "Apollo控制模块详解Ⅰ",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-10",
+          "title": "无人驾驶车纳米学位",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p1-11",
-          "title": "Apollo控制模块详解Ⅱ",
-          "section": "第一课：apollo原理与实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c1-11",
+          "title": "开启专题学习之旅",
+          "section": "第一课：无人驾驶概览",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p2-01",
-          "title": "快速上手，五步入门自动驾驶",
-          "section": "第二课：apollo系统实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c2-01",
+          "title": "地图简介",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p2-02",
-          "title": "Linux基础入门与实践",
-          "section": "第二课：apollo系统实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c2-02",
+          "title": "Sebastian介绍高精度地图",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p2-03",
-          "title": "Apollo感知之数据结构解析",
-          "section": "第二课：apollo系统实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c2-03",
+          "title": "高精度地图vs传统地图",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p2-04",
-          "title": "Apollo定位之NDT定位实践",
-          "section": "第二课：apollo系统实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c2-04",
+          "title": "地图与定位、感知与规划的关系_a",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p2-05",
-          "title": "定速巡航场景仿真调试",
-          "section": "第二课：apollo系统实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c2-05",
+          "title": "地图与定位、感知与规划的关系_b",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
         },
         {
-          "id": "apollo-intro-p2-06",
-          "title": "Apollo规划之路径规划仿真调试",
-          "section": "第二课：apollo系统实践",
-          "format": "目录课题（原页视频入口）",
-          "unit_type": "topic",
-          "url": "https://apollo.baidu.com/community/online-course/105",
+          "id": "apollo-basics-c2-06",
+          "title": "地图与定位、感知与规划的关系_c",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
           "trackable": true
+        },
+        {
+          "id": "apollo-basics-c2-07",
+          "title": "Apollo高精度地图",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c2-08",
+          "title": "Apollo高精度地图构建",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c2-09",
+          "title": "课程综述",
+          "section": "第二课：高精地图",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-01",
+          "title": "定位简介",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-02",
+          "title": "Sebastian介绍定位",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-03",
+          "title": "GNSSRTK_a",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-04",
+          "title": "GNSSRTK_b",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-05",
+          "title": "惯性导航_a",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-06",
+          "title": "惯性导航_b",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-07",
+          "title": "激光雷达定位",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-08",
+          "title": "视觉定位",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-09",
+          "title": "Apollo定位",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-10",
+          "title": "项目示例被盯上的小车",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c3-11",
+          "title": "课程综述",
+          "section": "第三课：定位",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-01",
+          "title": "感知简介",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-02",
+          "title": "Sebastian介绍感知",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-03",
+          "title": "计算机视觉",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-04",
+          "title": "摄像头图像",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-05",
+          "title": "LiDAR图像",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-06",
+          "title": "机器学习",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-07",
+          "title": "神经网络",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-08",
+          "title": "反向传播算法",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-09",
+          "title": "卷积神经网络",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-10",
+          "title": "检测与分类",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-11",
+          "title": "跟踪",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-12",
+          "title": "分割",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-13",
+          "title": "Apollo感知",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-14",
+          "title": "传感器数据比较",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-15",
+          "title": "感知融合策略",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-16",
+          "title": "项目示例：感知与融合",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c4-17",
+          "title": "课程综述",
+          "section": "第四课：感知",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-01",
+          "title": "预测简介_a",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-02",
+          "title": "预测简介_b",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-03",
+          "title": "Sebastian介绍预测",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-04",
+          "title": "不同的预测方式",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-05",
+          "title": "基于车道的预测.mp4",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-06",
+          "title": "障碍物状态",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-07",
+          "title": "预测目标车道",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-08",
+          "title": "递归神经网络",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-09",
+          "title": "递归神经网络在目标车道预测的应用",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-10",
+          "title": "轨迹生成",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c5-11",
+          "title": "课程综述",
+          "section": "第五课：预测",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-01",
+          "title": "规划简介",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-02",
+          "title": "Sebastian介绍规划",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-03",
+          "title": "路由",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-04",
+          "title": "世界到图",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-05",
+          "title": "网格世界_a",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-06",
+          "title": "网格世界_b",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-07",
+          "title": "网格世界_c",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-08",
+          "title": "Ap4",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-09",
+          "title": "从路由到轨迹",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-10",
+          "title": "3D轨迹",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-11",
+          "title": "评估一条轨迹_a",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-12",
+          "title": "评估一条轨迹_b",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-13",
+          "title": "Frenet坐标",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-14",
+          "title": "路径-速度解耦规划",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-15",
+          "title": "路径生成与选择",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-16",
+          "title": "ST图",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-17",
+          "title": "速度规划",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-18",
+          "title": "优化",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-19",
+          "title": "路径-速度规划的轨迹生成",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-20",
+          "title": "Lattice规划",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-21",
+          "title": "ST轨迹的终止状态",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-22",
+          "title": "SL轨迹的终止状态",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-23",
+          "title": "Lattice规划的轨迹生成",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-24",
+          "title": "项目示例路径规划",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c6-25",
+          "title": "课程综述",
+          "section": "第六课：规划",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-01",
+          "title": "控制简介",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-02",
+          "title": "Sebastian介绍控制",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-03",
+          "title": "控制流程_a",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-04",
+          "title": "控制流程_b",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-05",
+          "title": "PID控制_a",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-06",
+          "title": "PID控制_b",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-07",
+          "title": "PID控制_c",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-08",
+          "title": "PID优劣对比",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-09",
+          "title": "线性二次调节器",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-10",
+          "title": "模型预测控制",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-11",
+          "title": "时间范围与车辆模型",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-12",
+          "title": "MPC优化",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-13",
+          "title": "MPC优劣对比",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-14",
+          "title": "项目示例：控制",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c7-15",
+          "title": "课程综述",
+          "section": "第七课：控制",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c8-01",
+          "title": "恭喜你完成课程学习",
+          "section": "第八课：结束旅程",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        },
+        {
+          "id": "apollo-basics-c8-02",
+          "title": "Sebastian祝贺辞",
+          "section": "第八课：结束旅程",
+          "format": "视频（原站播放器选课）",
+          "unit_type": "video",
+          "url": "https://apollo.baidu.com/community/course/outline/1",
+          "trackable": true
+        }
+      ],
+      "verified_on": "2026-11-09",
+      "previous_defaults": [
+        {
+          "title": "自动驾驶导论 · 百度Apollo官方（17课题）",
+          "url": "https://apollo.baidu.com/community/online-course/105",
+          "description": "【基础配套｜阶段3】\n优先级：P0（当前专业课概念预习）；完整系统实践在深度学习基础之后进行。\n定位：给当前“人工智能与自动驾驶”专业课建立概念地图，不能替代Python、数学、机器学习或视觉主课，也不是强制的新每日计划。\n学校衔接：人工智能与自动驾驶（DAI3008）；先后顺序为自学建议，不作为学校课程学分或正式先修判断。\n课程来源：百度Apollo官方《自动驾驶导论》 https://apollo.baidu.com/community/online-course/105 。公开页面标注17课时、免费，分“apollo原理与实践”11项及“apollo系统实践”6项，本目录保留官网全部17项精确课题名称。\n当前学到：当前仅概念预习：第一课的1、5、6、7、8、9、10、11课题，听懂Apollo整体架构及定位、感知、规划、控制的作用和输入输出即可；与教授本周内容对照。完成Python、数学和PyTorch/CNN后，再按需要学习其余调试/仿真、Cyber RT、地图及第二课六项实践，不要求本阶段刷完17课题。\n暂时跳过：现在不搭完整Apollo开发环境，不照旧教程安装Linux/CUDA或运行车辆，不购买云实验/硬件；未学会基础编程和模型训练前暂缓系统实践。已有Linux课仍是命令行主课，Apollo的Linux课题仅按项目需要查阅。\n达标自测：能画出感知→定位→规划→控制的基本链路，说明每个模块输入、输出及一个失败风险；用中韩术语对照向教授问一个具体问题。后续在条件具备时完成一个仿真/离线小练习，而不是直接操作实车。\n打开方式：本目录17行是官网目录课题，不是17个已验证可直接播放的视频直链。每行均打开同一官方课程页，再在原页“课程目录”选择对应章节和课题“去学习”；完成实际学习后回本网站勾选该行。平台的自动播放状态不与本网站自动同步。\n访问说明：本次核验了公开目录、17课时及免费标识，未逐课验证完整播放和登录后的权限；可能需要百度账号，平台也列有GitHub登录。以官网当前访问条件为准，不保证免注册。当前不报名付费课程、不购买云实验、仿真、证书或设备。\n版本说明：教程中的Apollo、Cyber RT、系统安装与仿真步骤可能来自旧版本，与当前Apollo Studio和教授实验环境不一致。先听模块原理，实践时先确认教授要求和当前官方文档；不直接复制旧版安装/驱动命令。课题“Linux基础入门”与已有命令行课有重合，只作按需查阅，不另要求刷一遍。",
+          "source": "supplement",
+          "category": "ai"
+        }
+      ],
+      "legacy_catalogs": [
+        {
+          "title": "自动驾驶导论 · 百度Apollo官方（17课题）",
+          "url": "https://apollo.baidu.com/community/online-course/105",
+          "retired_on": "2026-11-09",
+          "reason": "原站开始学习不可用；仅保留旧课时身份与完成记录，不作为新课进度。",
+          "lessons": [
+            {
+              "id": "apollo-intro-p1-01",
+              "title": "使用Apollo学习自动驾驶",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-02",
+              "title": "Apollo自动驾驶调试及仿真实践",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-03",
+              "title": "Apollo Cyber RT模块详解与实践",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-04",
+              "title": "Apollo 高精地图模块详解与实践",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-05",
+              "title": "Apollo 定位模块详解与实践",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-06",
+              "title": "Apollo感知模块详解Ⅰ",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-07",
+              "title": "Apollo感知模块详解Ⅱ",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-08",
+              "title": "Apollo规划模块详解Ⅰ",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-09",
+              "title": "Apollo规划模块详解Ⅱ",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-10",
+              "title": "Apollo控制模块详解Ⅰ",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p1-11",
+              "title": "Apollo控制模块详解Ⅱ",
+              "section": "第一课：apollo原理与实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p2-01",
+              "title": "快速上手，五步入门自动驾驶",
+              "section": "第二课：apollo系统实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p2-02",
+              "title": "Linux基础入门与实践",
+              "section": "第二课：apollo系统实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p2-03",
+              "title": "Apollo感知之数据结构解析",
+              "section": "第二课：apollo系统实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p2-04",
+              "title": "Apollo定位之NDT定位实践",
+              "section": "第二课：apollo系统实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p2-05",
+              "title": "定速巡航场景仿真调试",
+              "section": "第二课：apollo系统实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            },
+            {
+              "id": "apollo-intro-p2-06",
+              "title": "Apollo规划之路径规划仿真调试",
+              "section": "第二课：apollo系统实践",
+              "format": "目录课题（原页视频入口）",
+              "unit_type": "topic",
+              "url": "https://apollo.baidu.com/community/online-course/105",
+              "trackable": true
+            }
+          ]
         }
       ]
     }

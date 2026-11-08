@@ -1,4 +1,4 @@
-"""Original, device-read listening exercises and account-isolated attempts."""
+"""Original versioned listening recordings and account-isolated attempts."""
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -9,6 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 LEVELS = {'english': ['B1', 'B2', 'C1'], 'korean': ['1', '2']}
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
+AUDIO_VOICES = {
+    'korean': {'female': 'ko-KR-SunHiNeural', 'male': 'ko-KR-InJoonNeural'},
+    'english': {'female': 'en-US-JennyNeural', 'male': 'en-US-GuyNeural'},
+}
 
 
 def init(c):
@@ -30,6 +34,61 @@ def now():
     return datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
 
 
+def validate_audio_profile(item):
+    """Bound role metadata to its original text; legacy snapshots have none.
+
+    This describes a pre-generated recording, never a claim that a device's
+    single fallback voice can reproduce the recorded male/female conversation.
+    """
+    profile = item.get('audio_profile')
+    if profile is None:
+        return
+    keys = {'version', 'style', 'mode', 'locale', 'instruction', 'speakers', 'turns',
+            'turn_pause_ms', 'intro_pause_ms', 'ending_pause_ms'}
+    lang = item['language']
+    if (not isinstance(profile, dict) or set(profile) != keys
+            or type(profile['version']) is not int or profile['version'] != 1
+            or profile['style'] != ('topik_i_beginner' if lang == 'korean' else 'english_academic')
+            or profile['locale'] != ('ko-KR' if lang == 'korean' else 'en-US')
+            or profile['mode'] not in ('dialogue', 'narration')
+            or not isinstance(profile['instruction'], str) or not 1 <= len(profile['instruction']) <= 200
+            or any(type(profile[key]) is not int or not 100 <= profile[key] <= 10000
+                   for key in ('turn_pause_ms', 'intro_pause_ms', 'ending_pause_ms'))):
+        raise RuntimeError('Invalid listening audio profile')
+    speakers, turns = profile['speakers'], profile['turns']
+    if (not isinstance(speakers, list) or not isinstance(turns, list)
+            or not 1 <= len(speakers) <= 2 or not 1 <= len(turns) <= 40):
+        raise RuntimeError('Invalid listening speakers or turns')
+    by_id = {}
+    for speaker in speakers:
+        if (not isinstance(speaker, dict) or set(speaker) != {'id', 'label', 'gender', 'voice'}
+                or not isinstance(speaker['id'], str)
+                or re.fullmatch(r'[a-z][a-z0-9_]{0,31}', speaker['id']) is None
+                or speaker['id'] in by_id
+                or not isinstance(speaker['label'], str) or not 1 <= len(speaker['label']) <= 40
+                or speaker['gender'] not in AUDIO_VOICES[lang]
+                or speaker['voice'] != AUDIO_VOICES[lang][speaker['gender']]):
+            raise RuntimeError('Invalid listening speaker voice')
+        by_id[speaker['id']] = speaker
+    if any(not isinstance(turn, dict) or set(turn) != {'speaker', 'text'}
+           or not isinstance(turn['speaker'], str) or turn['speaker'] not in by_id
+           or not isinstance(turn['text'], str) or not turn['text'].strip()
+           or len(turn['text']) > 5000 for turn in turns):
+        raise RuntimeError('Invalid listening utterance')
+    if profile['mode'] == 'dialogue':
+        if (len(speakers) != 2 or {s['gender'] for s in speakers} != {'male', 'female'}
+                or len({s['label'] for s in speakers}) != 2
+                or {t['speaker'] for t in turns} != set(by_id)):
+            raise RuntimeError('Dialogues require one male and one female speaker')
+        expected = '\n'.join(by_id[t['speaker']]['label'] + ': ' + t['text'] for t in turns)
+    else:
+        if len(speakers) != 1 or len(turns) != 1:
+            raise RuntimeError('Narrations require one speaker')
+        expected = turns[0]['text']
+    if expected != item['script']:
+        raise RuntimeError('Listening turns must match the original script')
+
+
 def bank():
     data = json.loads((ROOT / 'listening_bank.json').read_text(encoding='utf-8'))
     items = data['items']
@@ -43,6 +102,7 @@ def bank():
                 or any(len(q['options']) != 4 or type(q['correct']) is not int
                        or not 0 <= q['correct'] < 4 for q in item['questions'])):
             raise RuntimeError('Invalid listening question')
+        validate_audio_profile(item)
     return data
 
 
@@ -147,8 +207,10 @@ def read_audio(c, uid, query):
 def public(item, c=None):
     # Synthesis needs the public script. It stays hidden in the normal UI, not
     # encrypted: this is practice, not a secure examination environment.
+    profile = item.get('audio_profile')
     return {key: item[key] for key in ('id', 'language', 'level', 'title', 'type', 'knowledge_points')} | {
         'revision': revision(item), 'tts_text': item['script'],
+        **({'audio_profile': profile} if profile else {}),
         'audio': audio_descriptor(item, c),
         'questions': [{key: q[key] for key in ('id', 'prompt', 'options')} for q in item['questions']]}
 
