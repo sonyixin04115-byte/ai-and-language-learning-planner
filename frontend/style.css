@@ -39,3 +39,8 @@
 .rest-day-center-note p{margin:0 0 5px;font-size:13px;line-height:1.8;color:#6b7e6e}.rest-day-center-note small{font-size:12px}
 .rest-day-task-details{margin-top:14px}.rest-day-task-details>summary{width:fit-content;max-width:100%;min-height:44px;padding:10px 2px;color:#496c55;font-size:14px;cursor:pointer;overflow-wrap:anywhere}.rest-day-task-details[open]>.table-scroll{margin-top:10px}
 @media(max-width:700px){.daily-task-card .rest-day-center{min-height:360px;padding-inline:16px}.daily-task-card .rest-day-center strong{font-size:clamp(76px,16vw,104px)}.rest-day-center-note{right:16px;left:16px;bottom:18px}}
+
+.task-move-title{font-weight:600;overflow-wrap:anywhere}
+.task-move-error{color:#a34b35}.task-move-error:empty{display:none}
+.table-actions button.task-move{white-space:nowrap}
+.task-move-notice{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 16px;padding:6px 14px;border:1px solid #d6e3d0;border-radius:8px;background:#eef5e8;color:#375d3f}

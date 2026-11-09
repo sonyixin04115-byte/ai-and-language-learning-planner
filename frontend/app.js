@@ -18,6 +18,7 @@ function shift(day,n){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+n)
 let state=null,view='today',renderedView='today',selected=today(),registering=false,editing=null,courseEditing=null,filter='all',courseFilter='all',openedCourse=null,lessons=[],lessonQuery='',lessonLoadToken=0,refreshGeneration=0,navigationGeneration=0,pendingMutations=0;
 const lessonWrites=new Set();
 const taskActionWrites=new Set();
+let taskMoveNotice=null;
 const restTaskExpanded=new Set();
 let dayRestBusy=false;
 const languageCaches=new Map(),languageWrites=new Set(),languageGradeWrites=new Map();
@@ -185,9 +186,15 @@ function isRestDay(day=selected){return Array.isArray(state?.rest_days)&&state.r
 function restDayButtonHTML(day=selected){const rest=isRestDay(day);return `<button type="button" id="restDayToggle" class="rest-day-toggle${rest?' is-rest-day':''}" aria-pressed="${rest}" aria-label="${rest?'取消':'设置'} ${esc(day)} 的休息日" ${dayRestBusy?'disabled':''}>${rest?'取消休息':'设为休息日'}</button>`}
 function restDayBannerHTML(day=selected){return isRestDay(day)?`<section class="rest-day-banner rest-day-center" role="status" aria-label="休息日"><strong>休息</strong><div class="rest-day-center-note"><p>这一天给自己放个假。任务、笔记和已有用时都保留，你也可以自行调整安排。</p><small>取消休息后，需要你手动继续计时。</small></div></section>`:''}
 function dailyTaskContentHTML(shown){const table=`<div class="table-scroll" tabindex="0" role="region" aria-label="每日任务表，可左右滚动"><table class="planner-table task-table"><caption>每日任务 · ${esc(selected)} · 共 ${shown.length} 项</caption><colgroup><col class="col-task-complete"><col class="col-task-title"><col class="col-task-day"><col class="col-task-category"><col class="col-task-planned"><col class="col-task-time"><col class="col-task-time"><col class="col-task-actual"><col class="col-task-status"><col class="col-task-actions"></colgroup><thead><tr><th scope="col">完成</th><th scope="col">任务名称</th><th scope="col">日期</th><th scope="col">分类</th><th scope="col">预计用时</th><th scope="col">开始时间</th><th scope="col">结束时间</th><th scope="col">实际用时</th><th scope="col">状态</th><th scope="col">操作</th></tr></thead><tbody>${shown.map(taskHTML).join('')||'<tr><td colspan="10" class="table-empty">暂无任务。点击「新建任务」或在下方输入，添加你自己的安排。</td></tr>'}</tbody></table></div>`;return isRestDay()?restDayBannerHTML()+`<details id="restDayTasks" class="rest-day-task-details" ${restTaskExpanded.has(selected)?'open':''} data-day="${esc(selected)}"><summary>查看当天任务（${shown.length} 项）</summary>${table}</details>`:table}
-function taskMutationAllowed(){if(dayRestBusy){toast('正在更新休息日，请稍候。');return false}if(document.querySelector('dialog[open]')){toast('请先保存或关闭当前编辑窗口。');return false}if(languageHasDirty()||languageWrites.size||languageBatch||languageSettingBusy){toast('请先保存练习，再修改任务计时。');return false}return true}
+function taskMutationAllowed(allowedDialog=null){
+ if(dayRestBusy){toast('正在更新休息日，请稍候。');return false}
+ const openDialog=document.querySelector('dialog[open]');
+ if(openDialog&&openDialog!==allowedDialog){toast('请先保存或关闭当前编辑窗口。');return false}
+ if(languageHasDirty()||languageWrites.size||languageBatch||languageSettingBusy){toast('请先保存练习，再修改任务。');return false}
+ return true;
+}
 function syncDailyControls(){
- document.querySelectorAll('.task-table tr[data-task-id]').forEach(row=>{const busy=dayRestBusy||taskActionWrites.has(String(Number(row.dataset.taskId)));row.setAttribute('aria-busy',busy?'true':'false');row.querySelectorAll('button,input[type="checkbox"]').forEach(control=>control.disabled=busy)});
+ document.querySelectorAll('.task-table tr[data-task-id],.journal-table tr[data-task-id]').forEach(row=>{const busy=dayRestBusy||taskActionWrites.has(String(Number(row.dataset.taskId)));row.setAttribute('aria-busy',busy?'true':'false');row.querySelectorAll('button,input[type="checkbox"]').forEach(control=>control.disabled=busy)});
  document.querySelectorAll('#newTask,#quickAdd input,#quickAdd button,.daily-task-card .date-row button,.daily-task-card .date-row input,.daily-task-card [data-filter]').forEach(control=>control.disabled=dayRestBusy);
  const rest=$('#restDayToggle');if(rest)rest.disabled=dayRestBusy||!!pendingMutations||!!taskActionWrites.size;
 }
@@ -207,8 +214,95 @@ async function resetTaskTimer(id){
  taskActionWrites.add(id);syncDailyControls();
  try{await api('/tasks/'+id,'PATCH',{action:'reset'});await refresh();toast('该任务计时已清零，内容、笔记和完成状态保留');return true}catch(e){toast(e.message);return false}finally{taskActionWrites.delete(id);syncDailyControls()}
 }
+function taskMoveButtonHTML(task){
+ if(task.done||task.day==='9999-12-31')return '';
+ return `<button type="button" class="link task-move" data-task-move="${task.id}" aria-label="移到日期 ${esc(task.title)}">移到日期</button>`;
+}
+function taskMoveNoticeHTML(){
+ if(!taskMoveNotice||taskMoveNotice.owner!==state.user.username)return '';
+ const {day,paused}=taskMoveNotice;
+ return `<section class="task-move-notice" role="status"><span>已移到 ${esc(day)}${paused?'，计时已暂停':''}。</span><button type="button" id="viewMovedTaskDay" class="link">查看目标日</button></section>`;
+}
+function viewMovedTaskDay(){
+ if(!taskMoveNotice||taskMoveNotice.owner!==state?.user.username||!taskMutationAllowed())return;
+ if(quickAddDirty()){
+  toast('请先保存或清空快速添加框里的内容，再查看目标日。');
+  return;
+ }
+ selected=taskMoveNotice.day;
+ taskMoveNotice=null;
+ view='today';
+ filter='all';
+ if(isRestDay())restTaskExpanded.add(selected);
+ render();
+}
+function openTaskMove(id){
+ if(!state||!taskMutationAllowed()||taskActionWrites.has(id))return;
+ const task=state.tasks.find(item=>String(item.id)===id);
+ if(!task||task.done||task.day==='9999-12-31')return;
+
+ // Task dates are calendar days. Use UTC to increment them without local clock shifts.
+ const nextDay=new Date(task.day+'T00:00:00Z');
+ nextDay.setUTCDate(nextDay.getUTCDate()+1);
+ const earliest=nextDay.toISOString().slice(0,10);
+ const owner=state.user.username;
+ let dialog=$('#taskMoveDialog');
+ if(!dialog){
+  dialog=document.createElement('dialog');
+  dialog.id='taskMoveDialog';
+  dialog.setAttribute('aria-labelledby','taskMoveDialogTitle');
+  document.body.appendChild(dialog);
+ }
+ dialog.innerHTML=`<form id="taskMoveForm">
+  <h2 id="taskMoveDialogTitle">移到日期</h2>
+  <p class="task-move-title">${esc(task.title)}</p>
+  <p class="muted">原定 ${esc(task.day)}。请选择之后的任意日期。</p>
+  <label>目标日期<input name="day" type="date" required min="${earliest}" max="9999-12-31" value="${earliest}"></label>
+  <p class="task-move-error" role="alert"></p>
+  <div class="actions"><button type="button" data-move-cancel>取消</button><button type="submit" class="primary">确认移动</button></div>
+ </form>`;
+ const form=dialog.querySelector('form');
+ const errorMessage=dialog.querySelector('[role="alert"]');
+ const controls=form.querySelectorAll('input,button');
+ form.querySelector('[data-move-cancel]').onclick=()=>dialog.close();
+ dialog.oncancel=event=>{if(taskActionWrites.has(id))event.preventDefault()};
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  if(!taskMutationAllowed(dialog)||taskActionWrites.has(id)||state?.user.username!==owner)return;
+  if(!form.reportValidity())return;
+  const day=form.elements.day.value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||day<earliest){
+   errorMessage.textContent='请选择晚于原定日期的有效日期。';
+   return;
+  }
+  errorMessage.textContent='';
+  taskActionWrites.add(id);
+  syncDailyControls();
+  controls.forEach(control=>control.disabled=true);
+  try{
+   const result=await api('/tasks/'+id,'PATCH',{action:'reschedule',day});
+   dialog.close();
+   if(state?.user.username!==owner)return;
+   const movedDay=result.day;
+   taskMoveNotice={owner,day:movedDay,paused:result.paused_on_move};
+   const message=`已移到 ${movedDay}${result.paused_on_move?'，计时已暂停':''}。`;
+   try{
+    await refresh();
+    $('#viewMovedTaskDay')?.focus();
+    toast(message);
+   }catch{toast(message+'列表暂未刷新，请稍后重新打开。')}
+  }catch(error){
+   errorMessage.textContent=error.message;
+  }finally{
+   taskActionWrites.delete(id);
+   controls.forEach(control=>control.disabled=false);
+   syncDailyControls();
+  }
+ };
+ dialog.showModal();
+}
 function taskTitleHTML(t){return `<button type="button" class="cell-open" data-edit="${t.id}" aria-label="查看或编辑任务 ${esc(t.title)}"><span class="cell-preview">${esc(t.title)}</span><small class="cell-open-hint">查看完整内容 →</small></button>`}
-function taskHTML(t){const status=taskStatus(t);return `<tr class="${t.done?'is-done':''}" data-task-id="${t.id}"><td class="completion-cell"><input type="checkbox" aria-label="完成 ${esc(t.title)}" data-toggle="${t.id}" ${t.done?'checked':''}></td><th scope="row" class="task-name">${taskTitleHTML(t)}</th><td class="date-cell">${esc(t.day)}</td><td class="category-cell">${esc(t.category)}</td><td class="number-cell">${t.planned} 分钟</td><td class="time-cell">${taskTimeHTML(t.started_at)}</td><td class="time-cell">${taskTimeHTML(t.finished_at)}</td><td class="number-cell">${actualHTML(t)}</td><td><span class="table-status ${status.style}">${status.label}</span></td><td class="table-actions"><div class="task-action-buttons">${taskTimerButtonHTML(t)}<button type="button" class="link" data-edit="${t.id}">编辑 / 记录</button>${taskResetButtonHTML(t)}<button type="button" class="link danger" data-delete="${t.id}" aria-label="删除 ${esc(t.title)}">移除</button></div></td></tr>`}
+function taskHTML(t){const status=taskStatus(t);return `<tr class="${t.done?'is-done':''}" data-task-id="${t.id}"><td class="completion-cell"><input type="checkbox" aria-label="完成 ${esc(t.title)}" data-toggle="${t.id}" ${t.done?'checked':''}></td><th scope="row" class="task-name">${taskTitleHTML(t)}</th><td class="date-cell">${esc(t.day)}</td><td class="category-cell">${esc(t.category)}</td><td class="number-cell">${t.planned} 分钟</td><td class="time-cell">${taskTimeHTML(t.started_at)}</td><td class="time-cell">${taskTimeHTML(t.finished_at)}</td><td class="number-cell">${actualHTML(t)}</td><td><span class="table-status ${status.style}">${status.label}</span></td><td class="table-actions"><div class="task-action-buttons">${taskTimerButtonHTML(t)}<button type="button" class="link" data-edit="${t.id}">编辑 / 记录</button>${taskMoveButtonHTML(t)}${taskResetButtonHTML(t)}<button type="button" class="link danger" data-delete="${t.id}" aria-label="删除 ${esc(t.title)}">移除</button></div></td></tr>`}
 
 
 function lessonTrackable(lesson){return lesson&&((lesson.trackable===true)||(lesson.kind==='video'&&lesson.trackable!==false))}
@@ -455,9 +549,9 @@ function bindLanguagePractice(){
 }
 
 function render(){if(!state)return;if(window.StudyListening&&typeof window.StudyListening.dispose==='function')window.StudyListening.dispose();const main=$('#app main');if(main)main.dataset.view=view;const names={today:'每日计划',courses:'课程资料库',english:'英语学习',korean:'韩语学习',journal:'任务记录',settings:'个人设置'};$('#breadcrumb').textContent='人工智能学习计划 / '+names[view];document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));let html='';const all=state.tasks||[],tasks=all.filter(t=>t.day===selected).sort((a,b)=>a.done-b.done||a.id-b.id),done=tasks.filter(t=>t.done).length;
-if(view==='today'){const rest=isRestDay(),shown=tasks.filter(t=>filter==='all'||(filter==='done'?t.done:!t.done));html=hero(`${state.user.name}，今天想完成什么？`,'由你安排任务。点「开始计时」记录时间，完成后打钩。','<button class="primary" id="newTask">＋ 新建任务</button>')+`<div class="stats"><div class="stat"><span>当天已完成</span><strong>${done} <small>/ ${tasks.length}</small></strong><span>按照自己的节奏来</span></div><div class="stat"><span>当天计划用时</span><strong>${tasks.reduce((s,t)=>s+t.planned,0)} <small>分钟</small></strong><span>由你添加的任务决定</span></div><div class="stat actual-stat"><span>当天实际投入 <small>（自动计算）</small></span><strong id="settledActualTotal">${formatTaskDuration(tasks.reduce((sum,t)=>sum+settledTaskMilliseconds(t),0))}</strong><span>结束减开始并扣除暂停，未结束的任务完成后计入</span></div><div class="stat"><span>累计完成</span><strong>${all.filter(t=>t.done).length} <small>项</small></strong><span>历史记录持续保留</span></div></div><section class="card daily-task-card"><div class="section-title"><h3>每日待办列表</h3><span class="pill${rest?' rest-day-pill':''}">${selected===today()?'今天':esc(selected)}${rest?' · 休息日':''}</span></div><div class="toolbar"><div class="date-row"><button id="prevDay" aria-label="前一天">‹</button><input id="date" type="date" aria-label="计划日期" value="${selected}"><button id="nextDay" aria-label="后一天">›</button><button id="goToday">今天</button></div>${restDayButtonHTML()}<div class="segmented">${[['all','全部'],['pending','待完成'],['done','已完成']].map(([k,l])=>`<button data-filter="${k}" class="${filter===k?'selected':''}">${l}</button>`).join('')}</div></div><div class="progress"><i style="width:${tasks.length?done/tasks.length*100:0}%"></i></div><p class="task-timer-help">开始计时 → 暂停计时（休息） → 继续计时 → 左侧打钩完成。休息不计实际投入，刷新后仍保存。未点开始就完成，可后补起止时间自动计算；窄屏可左右滑动表格。</p>${dailyTaskContentHTML(shown)}<form id="quickAdd" class="add-form"><input name="title" required maxlength="200" aria-label="快速添加任务" placeholder="快速添加：今天想完成什么？"><input name="planned" type="number" value="30" min="1" max="600" aria-label="预计分钟"><input name="category" list="categories" value="其他" aria-label="任务分类" style="width:110px"><button class="primary">添加</button></form></section><div class="info-strip"><span>◷ 学期提醒：2026 年 12 月 14–20 日是本学期最后一周。</span><span>计划没有截止日，学期结束后继续使用。</span></div>`}
+if(view==='today'){const rest=isRestDay(),shown=tasks.filter(t=>filter==='all'||(filter==='done'?t.done:!t.done));html=hero(`${state.user.name}，今天想完成什么？`,'由你安排任务。点「开始计时」记录时间，完成后打钩。','<button class="primary" id="newTask">＋ 新建任务</button>')+taskMoveNoticeHTML()+`<div class="stats"><div class="stat"><span>当天已完成</span><strong>${done} <small>/ ${tasks.length}</small></strong><span>按照自己的节奏来</span></div><div class="stat"><span>当天计划用时</span><strong>${tasks.reduce((s,t)=>s+t.planned,0)} <small>分钟</small></strong><span>由你添加的任务决定</span></div><div class="stat actual-stat"><span>当天实际投入 <small>（自动计算）</small></span><strong id="settledActualTotal">${formatTaskDuration(tasks.reduce((sum,t)=>sum+settledTaskMilliseconds(t),0))}</strong><span>结束减开始并扣除暂停，未结束的任务完成后计入</span></div><div class="stat"><span>累计完成</span><strong>${all.filter(t=>t.done).length} <small>项</small></strong><span>历史记录持续保留</span></div></div><section class="card daily-task-card"><div class="section-title"><h3>每日待办列表</h3><span class="pill${rest?' rest-day-pill':''}">${selected===today()?'今天':esc(selected)}${rest?' · 休息日':''}</span></div><div class="toolbar"><div class="date-row"><button id="prevDay" aria-label="前一天">‹</button><input id="date" type="date" aria-label="计划日期" value="${selected}"><button id="nextDay" aria-label="后一天">›</button><button id="goToday">今天</button></div>${restDayButtonHTML()}<div class="segmented">${[['all','全部'],['pending','待完成'],['done','已完成']].map(([k,l])=>`<button data-filter="${k}" class="${filter===k?'selected':''}">${l}</button>`).join('')}</div></div><div class="progress"><i style="width:${tasks.length?done/tasks.length*100:0}%"></i></div><p class="task-timer-help">开始计时 → 暂停计时（休息） → 继续计时 → 左侧打钩完成。休息不计实际投入，刷新后仍保存。未点开始就完成，可后补起止时间自动计算；窄屏可左右滑动表格。</p>${dailyTaskContentHTML(shown)}<form id="quickAdd" class="add-form"><input name="title" required maxlength="200" aria-label="快速添加任务" placeholder="快速添加：今天想完成什么？"><input name="planned" type="number" value="30" min="1" max="600" aria-label="预计分钟"><input name="category" list="categories" value="其他" aria-label="任务分类" style="width:110px"><button class="primary">添加</button></form></section><div class="info-strip"><span>◷ 学期提醒：2026 年 12 月 14–20 日是本学期最后一周。</span><span>计划没有截止日，学期结束后继续使用。</span></div>`}
 if(isCourseView())html=openedCourse?lessonsHTML():coursesHTML();
-if(view==='journal'){const logged=all.filter(t=>t.done||t.actual||t.note||t.started_at||t.finished_at).sort((a,b)=>b.day.localeCompare(a.day)||b.id-a.id),recent=Array.from({length:7},(_,i)=>{const d=shift(today(),i-6),milliseconds=all.filter(t=>t.day===d).reduce((sum,t)=>sum+settledTaskMilliseconds(t),0);return {day:d,milliseconds,minutes:milliseconds/60000}}),max=Math.max(60,...recent.map(x=>x.minutes));html=hero('每一份投入，都有记录。','回顾完成的任务、实际用时和笔记。','<button id="export">导出记录 ↓</button>')+`<section class="card"><h3>最近 7 天实际投入（自动计算）</h3><div class="week-bars">${recent.map(x=>`<div class="bar" title="${formatTaskDuration(x.milliseconds)}"><span>${formatTaskMinutes(x.minutes)} 分</span><i style="height:${Math.max(3,x.minutes/max*80)}px"></i>${x.day.slice(5)}</div>`).join('')}</div></section><div class="table-scroll" style="margin-top:20px" tabindex="0" role="region" aria-label="任务记录表，可左右滚动"><table class="planner-table journal-table"><caption>历史任务记录 · ${logged.length} 项</caption><colgroup><col class="col-journal-day"><col class="col-journal-title"><col class="col-journal-category"><col class="col-journal-time"><col class="col-journal-time"><col class="col-journal-actual"><col class="col-journal-status"><col class="col-journal-note"><col class="col-journal-actions"></colgroup><thead><tr><th scope="col">日期</th><th scope="col">任务名称</th><th scope="col">分类</th><th scope="col">开始时间</th><th scope="col">结束时间</th><th scope="col">实际用时</th><th scope="col">状态</th><th scope="col">笔记</th><th scope="col">操作</th></tr></thead><tbody>${logged.map(t=>`<tr><td class="date-cell">${esc(t.day)}</td><th scope="row" class="task-name">${taskTitleHTML(t)}</th><td class="category-cell">${esc(t.category)}</td><td class="time-cell">${taskTimeHTML(t.started_at)}</td><td class="time-cell">${taskTimeHTML(t.finished_at)}</td><td class="number-cell">${actualHTML(t)}</td><td><span class="table-status ${taskStatus(t).style}">${taskStatus(t).label}</span></td><td class="note-cell">${t.note?`<button type="button" class="cell-open" data-edit="${t.id}" aria-label="查看 ${esc(t.title)} 的完整笔记"><span class="cell-preview">${esc(t.note)}</span><small class="cell-open-hint">查看完整笔记 →</small></button>`:'<span class="muted">—</span>'}</td><td class="table-actions"><button class="link" data-edit="${t.id}">编辑记录</button></td></tr>`).join('')||'<tr><td colspan="9" class="table-empty">开始任务、完成任务或写下笔记后，记录会出现在这里。</td></tr>'}</tbody></table></div>`}
+if(view==='journal'){const logged=all.filter(t=>t.done||t.actual||t.note||t.started_at||t.finished_at).sort((a,b)=>b.day.localeCompare(a.day)||b.id-a.id),recent=Array.from({length:7},(_,i)=>{const d=shift(today(),i-6),milliseconds=all.filter(t=>t.day===d).reduce((sum,t)=>sum+settledTaskMilliseconds(t),0);return {day:d,milliseconds,minutes:milliseconds/60000}}),max=Math.max(60,...recent.map(x=>x.minutes));html=hero('每一份投入，都有记录。','回顾完成的任务、实际用时和笔记。','<button id="export">导出记录 ↓</button>')+taskMoveNoticeHTML()+`<section class="card"><h3>最近 7 天实际投入（自动计算）</h3><div class="week-bars">${recent.map(x=>`<div class="bar" title="${formatTaskDuration(x.milliseconds)}"><span>${formatTaskMinutes(x.minutes)} 分</span><i style="height:${Math.max(3,x.minutes/max*80)}px"></i>${x.day.slice(5)}</div>`).join('')}</div></section><div class="table-scroll" style="margin-top:20px" tabindex="0" role="region" aria-label="任务记录表，可左右滚动"><table class="planner-table journal-table"><caption>历史任务记录 · ${logged.length} 项</caption><colgroup><col class="col-journal-day"><col class="col-journal-title"><col class="col-journal-category"><col class="col-journal-time"><col class="col-journal-time"><col class="col-journal-actual"><col class="col-journal-status"><col class="col-journal-note"><col class="col-journal-actions"></colgroup><thead><tr><th scope="col">日期</th><th scope="col">任务名称</th><th scope="col">分类</th><th scope="col">开始时间</th><th scope="col">结束时间</th><th scope="col">实际用时</th><th scope="col">状态</th><th scope="col">笔记</th><th scope="col">操作</th></tr></thead><tbody>${logged.map(t=>`<tr data-task-id="${t.id}"><td class="date-cell">${esc(t.day)}</td><th scope="row" class="task-name">${taskTitleHTML(t)}</th><td class="category-cell">${esc(t.category)}</td><td class="time-cell">${taskTimeHTML(t.started_at)}</td><td class="time-cell">${taskTimeHTML(t.finished_at)}</td><td class="number-cell">${actualHTML(t)}</td><td><span class="table-status ${taskStatus(t).style}">${taskStatus(t).label}</span></td><td class="note-cell">${t.note?`<button type="button" class="cell-open" data-edit="${t.id}" aria-label="查看 ${esc(t.title)} 的完整笔记"><span class="cell-preview">${esc(t.note)}</span><small class="cell-open-hint">查看完整笔记 →</small></button>`:'<span class="muted">—</span>'}</td><td class="table-actions"><button class="link" data-edit="${t.id}">编辑记录</button>${taskMoveButtonHTML(t)}</td></tr>`).join('')||'<tr><td colspan="9" class="table-empty">开始任务、完成任务或写下笔记后，记录会出现在这里。</td></tr>'}</tbody></table></div>`}
 if(view==='settings')html=hero('把空间调整成适合自己的样子。','任务、课程和历史记录都属于自己的账号。')+`<div class="settings-grid"><form id="settingsForm" class="card"><h3>个人偏好</h3><label>称呼<input name="name" value="${esc(state.user.name)}" maxlength="40" required></label><label>每日参考目标（分钟）<input name="minutes" type="number" min="30" max="600" value="${state.user.minutes}" required></label><p class="muted">目标仅供参考，不会自动排课或生成任务。</p><button class="primary">保存设置</button></form>${avatarSettingsHTML()}<div><section class="card"><h3>数据备份</h3><p class="muted">导出任务、笔记和课程目录为 JSON。${isCloud()?'完整恢复需要备份云端私有 data/study.db；':'完整恢复需要备份 backend/study.db；'}当前没有 JSON 导入功能。</p><button id="export">导出数据 ↓</button></section></div></div><section class="card" style="margin-top:20px"><h3>当前运行方式</h3><p class="muted">${isCloud()?'云端版 · 电脑和平板登录同一网址和账号，使用同一份云端记录。视频和原始资料仍在本地移动硬盘，不随目录上传。':'F 盘本机版 · 资料来自移动硬盘，任务记录保存在本机。云端记录与本机记录各自独立；若使用云端版，请在各设备打开同一个云端网址。'}</p></section>`;
 $('#content').innerHTML=html;renderedView=view;bind();if(window.StudyTaskTimer)window.StudyTaskTimer.refresh();if(isLanguageView()&&!openedCourse){loadLanguagePractice();const listening=$('#listeningPractice');if(listening&&window.StudyListening&&typeof window.StudyListening.mount==='function')Promise.resolve(window.StudyListening.mount(listening,{language:currentCourseCategory(),username:state.user.username,api,audioBase:API})).catch(error=>toast(error.message||'听力练习暂时无法载入。'))}}
 function syncTaskTimingForm(){
@@ -495,6 +589,8 @@ function openCourse(c=null){courseEditing=c;const f=$('#courseForm');f.reset();$
 function bind(){const on=(s,e,fn)=>{const el=$(s);if(el)el.addEventListener(e,fn)},mutate=async(path,method,data,message)=>{if(dayRestBusy&&(path==='/tasks'||path.startsWith('/tasks/'))){toast('正在更新休息日，请稍候。');return false}try{await api(path,method,data);await refresh();toast(message);return true}catch(e){toast(e.message);return false}};syncDailyControls();
 on('#avatarFile','change',selectAvatar);on('#avatarForm','submit',saveAvatar);on('#removeAvatar','click',()=>{if(!avatarBusy){avatarSelection++;avatarDraft='';updateAvatarControls()}});on('#cancelAvatar','click',()=>{if(!avatarBusy){avatarSelection++;avatarDraft=null;updateAvatarControls()}});updateAvatarControls();bindLanguagePractice();
 on('#restDayTasks','toggle',event=>{const details=event.currentTarget;if(!details.isConnected)return;const day=details.dataset.day;if(details.open)restTaskExpanded.add(day);else restTaskExpanded.delete(day)});on('#restDayToggle','click',toggleRestDay);on('#newTask','click',()=>{if(!dayRestBusy)openTask()});on('#date','change',e=>{if(!dayRestBusy&&e.target.value){selected=e.target.value;render()}});on('#prevDay','click',()=>{if(!dayRestBusy){selected=shift(selected,-1);render()}});on('#nextDay','click',()=>{if(!dayRestBusy){selected=shift(selected,1);render()}});on('#goToday','click',()=>{if(!dayRestBusy){selected=today();render()}});document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{if(!dayRestBusy){filter=b.dataset.filter;render()}});document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{if(!dayRestBusy)openTask(state.tasks.find(t=>t.id===+b.dataset.edit))});
+on('#viewMovedTaskDay','click',viewMovedTaskDay);
+document.querySelectorAll('[data-task-move]').forEach(button=>button.onclick=()=>openTaskMove(button.dataset.taskMove));
 document.querySelectorAll('[data-task-reset]').forEach(b=>b.onclick=()=>resetTaskTimer(b.dataset.taskReset));
 document.querySelectorAll('[data-task-action]').forEach(b=>b.onclick=async()=>{const id=String(Number(b.dataset.taskId)),action=b.dataset.taskAction;if(!taskMutationAllowed()||!['start','pause','resume'].includes(action)||taskActionWrites.has(id))return;taskActionWrites.add(id);syncDailyControls();try{await mutate('/tasks/'+id,'PATCH',{action},{start:'已开始计时，休息时可暂停',pause:'已暂停，休息时间不计入实际投入',resume:'已继续计时'}[action])}finally{taskActionWrites.delete(id);syncDailyControls()}});
 document.querySelectorAll('[data-toggle]').forEach(b=>b.onchange=async()=>{const checked=b.checked,id=String(Number(b.dataset.toggle));if(!taskMutationAllowed()||taskActionWrites.has(id)){b.checked=!checked;return}taskActionWrites.add(id);syncDailyControls();try{const ok=await mutate('/tasks/'+id,'PATCH',{done:checked},checked?'已完成，继续下一项！':'已恢复为待完成');if(!ok&&b.isConnected)b.checked=!checked}finally{taskActionWrites.delete(id);syncDailyControls()}});
