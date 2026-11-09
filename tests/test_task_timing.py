@@ -186,7 +186,7 @@ class TaskTimingTests(unittest.TestCase):
         self.assertNotIn(template_ids['untouched'],visible)
         self.assertTrue(all(tid in visible for label,tid in template_ids.items() if label!='untouched'))
 
-    def overlapping_updates(self,tid,payload,first_time,second_time,second_path=None,second_method='PATCH',second_payload=None):
+    def overlapping_updates(self,tid,payload,first_time,second_time,second_path=None,second_method='PATCH',second_payload=None,second_status=200):
         """Overlap two API calls before the first write, without real data."""
         first_read=threading.Event();second_ready=threading.Event()
         release_first=threading.Event();first_reply=threading.Event()
@@ -224,7 +224,7 @@ class TaskTimingTests(unittest.TestCase):
                     self.assertTrue(second_ready.wait(5))
                 finally:release_first.set()
                 self.assertEqual(first.result(timeout=10)[0],200)
-                self.assertEqual(second.result(timeout=10)[0],200)
+                self.assertEqual(second.result(timeout=10)[0],second_status)
         return calls
 
     def test_overlapping_device_starts_and_completions_keep_first_times(self):
@@ -245,6 +245,100 @@ class TaskTimingTests(unittest.TestCase):
         state=self.req('/state')[1]
         self.assertEqual(state['archived_task_count'],0)
         self.assertEqual(self.task(tid)['started_at'],'2026-11-02T00:00:00Z')
+
+    def test_reschedule_uses_the_task_date_and_preserves_saved_fields(self):
+        manual = self.create(actual=17, note='保留手工用时和笔记')
+        ended = self.create(started_at='2026-11-01T01:00:00Z',
+                            finished_at='2026-11-01T01:35:00Z', note='保留实际起止')
+        for tid in (manual, ended):
+            before = self.task(tid)
+            with self.subTest(tid=tid), self.at('2026-11-10T01:00:00Z'):
+                # November 2 is later than the task date, even though it is past today.
+                code, result = self.req(f'/tasks/{tid}', 'PATCH',
+                                        {'action': 'reschedule', 'day': '2026-11-02'})
+                self.assertEqual((code, result), (200, {
+                    'ok': True, 'day': '2026-11-02', 'paused_on_move': False,
+                }))
+                self.assertEqual(self.task(tid), {**before, 'day': '2026-11-02'})
+                code, _ = self.req(f'/tasks/{tid}', 'PATCH',
+                                   {'action': 'reschedule', 'day': '2027-02-28'})
+                self.assertEqual(code, 200)
+                self.assertEqual(self.task(tid), {**before, 'day': '2027-02-28'})
+
+    def test_reschedule_to_rest_day_pauses_only_a_running_clock(self):
+        running = self.create(started_at='2026-11-01T01:00:00Z', note='原有笔记')
+        paused = self.create(started_at='2026-11-01T01:00:00Z')
+        target = '2026-11-10'
+        with self.at('2026-11-01T01:10:00Z'):
+            for tid in (running, paused):
+                self.assertEqual(self.req(f'/tasks/{tid}', 'PATCH', {'action': 'pause'})[0], 200)
+        with self.at('2026-11-01T01:20:00Z'):
+            self.assertEqual(self.req(f'/tasks/{running}', 'PATCH', {'action': 'resume'})[0], 200)
+            self.assertEqual(self.req('/days/rest', 'POST', {'day': target, 'rest': True})[0], 200)
+        running_before = self.task(running)
+        paused_before = self.task(paused)
+        with self.at('2026-11-01T01:50:00Z'):
+            self.assertEqual(self.req(f'/tasks/{running}', 'PATCH', {
+                'action': 'reschedule', 'day': target,
+            }), (200, {'ok': True, 'day': target, 'paused_on_move': True}))
+            self.assertEqual(self.req(f'/tasks/{paused}', 'PATCH', {
+                'action': 'reschedule', 'day': target,
+            }), (200, {'ok': True, 'day': target, 'paused_on_move': False}))
+        pauses = [*running_before['pause_intervals'], {
+            'started_at': '2026-11-01T01:50:00Z', 'finished_at': None,
+        }]
+        self.assertEqual(self.task(running), {**running_before, 'day': target, 'pause_intervals': pauses})
+        self.assertEqual(self.task(paused), {**paused_before, 'day': target})
+        with self.at('2026-11-01T02:30:00Z'):
+            self.assertEqual(self.req(f'/tasks/{running}', 'PATCH', {'done': True})[0], 200)
+        self.assertEqual(self.task(running)['actual'], 40)
+        self.assertEqual(self.req('/state')[1]['rest_days'], [target])
+
+    def test_reschedule_does_not_use_another_accounts_rest_day(self):
+        tid = self.create(started_at='2026-11-01T01:00:00Z')
+        before = self.task(tid)
+        target = '2026-11-10'
+        self.assertEqual(self.req('/days/rest', 'POST', {'day': target, 'rest': True},
+                                  token=self.other_token)[0], 200)
+        code, result = self.req(f'/tasks/{tid}', 'PATCH', {'action': 'reschedule', 'day': target})
+        self.assertEqual((code, result['paused_on_move']), (200, False))
+        self.assertEqual(self.task(tid), {**before, 'day': target})
+
+    def test_reschedule_with_an_invalid_pause_rolls_back_the_date(self):
+        tid = self.create(started_at='2026-11-01T03:00:00Z')
+        before = self.task(tid)
+        target = '2026-11-10'
+        with self.at('2026-11-01T02:00:00Z'):
+            self.assertEqual(self.req('/days/rest', 'POST', {'day': target, 'rest': True})[0], 200)
+            self.assertEqual(self.req(f'/tasks/{tid}', 'PATCH', {
+                'action': 'reschedule', 'day': target,
+            })[0], 400)
+        self.assertEqual(self.task(tid), before)
+
+    def test_reschedule_rejects_completed_tasks_and_malformed_or_unauthorized_requests(self):
+        tid = self.create(note='原有笔记')
+        done = self.create(done=True, actual=10)
+        before = self.req('/state')[1]['tasks']
+        valid = {'action': 'reschedule', 'day': '2026-11-10'}
+        invalid_dates = (None, 20261110, '20261110', '2026-W46-2', '2026-02-30', '2026-11-01', '2026-10-31')
+        invalid_payloads = [{'action': 'reschedule'}, {**valid, 'done': False}, {**valid, 'pause_intervals': []}]
+        invalid_payloads.extend({**valid, 'day': day} for day in invalid_dates)
+        for invalid in invalid_payloads:
+            with self.subTest(invalid=invalid):
+                self.assertEqual(self.req(f'/tasks/{tid}', 'PATCH', invalid)[0], 400)
+        self.assertEqual(self.req(f'/tasks/{done}', 'PATCH', valid)[0], 400)
+        self.assertEqual(self.req(f'/tasks/{tid}', 'PATCH', valid, token=self.other_token)[0], 404)
+        self.assertEqual(self.req(f'/tasks/{tid}', 'PATCH', valid, token=None)[0], 401)
+        self.assertEqual(self.req(f'/tasks/{tid}', 'GET', valid)[0], 405)
+        self.assertEqual(self.req(f'/tasks/{tid}', 'POST', valid)[0], 405)
+        self.assertEqual(self.req('/state')[1]['tasks'], before)
+
+    def test_concurrent_completion_rejects_a_later_reschedule_request(self):
+        tid = self.create(started_at='2026-11-01T01:00:00Z')
+        self.overlapping_updates(tid, {'done': True}, '2026-11-01T01:20:00Z', '2026-11-01T01:21:00Z',
+                                 second_payload={'action': 'reschedule', 'day': '2026-11-10'}, second_status=400)
+        saved = self.task(tid)
+        self.assertEqual((saved['day'], saved['done'], saved['actual']), ('2026-11-01', 1, 20))
 
 
 if __name__=='__main__':unittest.main(verbosity=2)
