@@ -209,6 +209,16 @@ def completed_lessons(c, uid, course, lessons=None):
 def now_utc():
     return datetime.now(timezone.utc)
 
+def plan_day(value):
+    message = '日期需为有效的 YYYY-MM-DD 格式'
+    try:
+        day = date.fromisoformat(value)
+    except (TypeError, ValueError):
+        raise ValueError(message) from None
+    if day.isoformat() != value:
+        raise ValueError(message)
+    return day
+
 def task_time(value, label):
     if value is None or value=='':return None
     if not isinstance(value,str) or len(value)>128:raise ValueError(label+'格式无效')
@@ -309,8 +319,8 @@ def task_timing(data, old=None, done=False, *, moment=None):
 def set_rest_day(c, uid, data):
     """Set one owner's day flag and pause that day's active clocks atomically."""
     if not isinstance(data,dict) or set(data)!={'day','rest'}:raise ValueError('请单独提交休息日期和休息状态')
-    day=data['day'];rest=data['rest']
-    if not isinstance(day,str) or len(day)!=10 or date.fromisoformat(day).isoformat()!=day:raise ValueError('日期需为 YYYY-MM-DD 格式')
+    day = plan_day(data['day']).isoformat()
+    rest = data['rest']
     if not isinstance(rest,bool):raise ValueError('休息状态应为 true 或 false')
     if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
     if not rest:
@@ -329,6 +339,33 @@ def set_rest_day(c, uid, data):
         paused_count+=1
     c.execute('INSERT INTO rest_days(user_id,day,created_at) VALUES(?,?,?)',(uid,day,serialize_task_time(moment)))
     return {'ok':True,'rest':True,'paused_tasks':paused_count}
+
+def reschedule_task(c, old, data):
+    """Move an owned task inside its existing write transaction."""
+    if set(data) != {'action', 'day'}:
+        raise ValueError('改期操作只需提交目标日期')
+    if old['done']:
+        raise ValueError('已完成的任务不能改期')
+    day = plan_day(data['day'])
+    if day <= date.fromisoformat(old['day']):
+        raise ValueError('新日期必须晚于任务当前的安排日期')
+
+    target = day.isoformat()
+    new_pause_history = None
+    if old['started_at'] and not old['finished_at']:
+        rest_day = c.execute('SELECT 1 FROM rest_days WHERE user_id=? AND day=?',
+                             (old['user_id'], target)).fetchone()
+        if rest_day:
+            pauses = read_pause_history(old['pause_history'])
+            if not pauses or pauses[-1]['finished_at'] is not None:
+                # Keep the saved clock values and append the usual pause interval.
+                _, _, _, pauses = task_timing({'action': 'pause'}, old, False)
+                new_pause_history = json.dumps(pauses, separators=(',', ':'))
+
+    c.execute('UPDATE tasks SET day=?,pause_history=COALESCE(?,pause_history) '
+              'WHERE id=? AND user_id=? AND archived=0',
+              (target, new_pause_history, old['id'], old['user_id']))
+    return {'ok': True, 'day': target, 'paused_on_move': new_pause_history is not None}
 
 def archive_template(c, user):
     """Archive untouched old template rows; keep all work and manual differences."""
@@ -566,11 +603,14 @@ class Handler(BaseHTTPRequestHandler):
                     # rather than overwrite it from an earlier snapshot.
                     if self.command in ('PATCH','DELETE'):c.execute('BEGIN IMMEDIATE')
                     if not c.execute('SELECT id FROM tasks WHERE id=? AND user_id=? AND archived=0',(tid,uid)).fetchone(): return self.reply(404, {'error':'任务不存在'})
+                    result = {'ok': True}
                     if self.command == 'DELETE': c.execute('DELETE FROM tasks WHERE id=? AND user_id=?',(tid,uid))
                     elif self.command == 'PATCH':
                         if not isinstance(data,dict):raise ValueError('任务数据需为对象')
                         old = c.execute('SELECT * FROM tasks WHERE id=? AND user_id=?',(tid,uid)).fetchone()
-                        if data.get('action')=='reset':
+                        if data.get('action') == 'reschedule':
+                            result = reschedule_task(c, old, data)
+                        elif data.get('action')=='reset':
                             started_at,finished_at,actual,pauses=task_timing(data,old,bool(old['done']))
                             c.execute('UPDATE tasks SET actual=?,started_at=?,finished_at=?,pause_history=? WHERE id=? AND user_id=?',
                                       (actual,started_at,finished_at,json.dumps(pauses,separators=(',',':')),tid,uid))
@@ -588,7 +628,7 @@ class Handler(BaseHTTPRequestHandler):
                             c.execute('UPDATE tasks SET done=?,actual=?,note=?,title=?,day=?,planned=?,category=?,started_at=?,finished_at=?,pause_history=? WHERE id=? AND user_id=?',(int(bool(done)),actual,note,title,day,planned,category,started_at,finished_at,json.dumps(pauses,separators=(',',':')),tid,uid))
                     else: return self.reply(405, {'error':'不支持的操作'})
                     c.commit()
-                    return self.reply(200, {'ok':True})
+                    return self.reply(200, result)
                 return self.reply(404, {'error':'接口不存在'})
         except (ValueError, KeyError, TypeError) as e: self.reply(400, {'error':str(e) or '输入有误'})
         except Exception: self.reply(500, {'error':'服务器发生错误，请重试'})
