@@ -3,6 +3,7 @@ import copy
 import json
 import io
 from pathlib import Path
+import tempfile
 import urllib.error
 import urllib.request
 from urllib.parse import urlencode
@@ -182,6 +183,61 @@ class ListeningTests(unittest.TestCase):
             self.assertEqual(c.execute('SELECT count(*) FROM listening_reveals').fetchone()[0], 0)
             self.assertEqual(c.execute('SELECT count(*) FROM language_daily_sets').fetchone()[0], before)
 
+    def test_korean_public_questions_include_learning_translations_but_not_answers(self):
+        exercise = self.exercise('korean')
+        item = next(x for x in listening.bank()['items'] if x['id'] == exercise['id'])
+        for question, original in zip(exercise['questions'], item['questions']):
+            self.assertEqual(set(question), {'id', 'prompt', 'options', 'prompt_zh', 'options_zh'})
+            self.assertEqual(question['prompt_zh'], original['prompt_zh'])
+            self.assertEqual(question['options_zh'], original['options_zh'])
+            self.assertNotIn('correct', question)
+            self.assertNotIn('explanation', question)
+            self.assertTrue(listening.korean_question_text(question['prompt'], prompt=True))
+            self.assertTrue(all(listening.korean_question_text(option) for option in question['options']))
+        saved = self.submit(exercise)
+        self.assertEqual(saved['saved']['score'], 3)
+        self.assertEqual(saved['exercise']['questions'], exercise['questions'])
+        self.assertEqual([q['correct'] for q in saved['review']['questions']],
+                         [q['correct'] for q in item['questions']])
+
+    def test_korean_question_translation_upgrade_retains_old_snapshot_and_audio(self):
+        current_bank = listening.bank()
+        current_item = next(x for x in current_bank['items'] if x['id'] == 'korean-1-listen-01')
+        legacy_bank = copy.deepcopy(current_bank)
+        legacy_item = next(x for x in legacy_bank['items'] if x['id'] == current_item['id'])
+        for question in legacy_item['questions']:
+            question['prompt'] = question.pop('prompt_zh')
+            question['options'] = question.pop('options_zh')
+        old_path, old_bytes = self.wav_fixture(legacy_item)
+        with patch.object(listening, 'bank', return_value=legacy_bank):
+            exercise = self.exercise('korean')
+            self.assertTrue(all(set(q) == {'id', 'prompt', 'options'} for q in exercise['questions']))
+            saved = self.submit(exercise)
+        with app.conn() as c:
+            before = [tuple(row) for row in c.execute('SELECT * FROM listening_attempts')]
+        new_path = old_path.with_name(current_item['id'] + '-' + listening.revision(current_item)[:16] + '.wav')
+        self.assertNotEqual(new_path, old_path)
+        # The recording itself is unchanged: a new content revision can reuse its bytes.
+        try:
+            new_path.hardlink_to(old_path)
+        except OSError:
+            new_path.write_bytes(old_bytes)
+        current = self.exercise('korean')
+        self.assertNotEqual(current['revision'], exercise['revision'])
+        self.assertEqual(current['audio']['type'], 'generated_wav')
+        self.assertEqual(self.audio_request(current['audio']['url'])[2], old_bytes)
+        self.assertEqual(self.req('/listening', 'POST', self.payload(exercise))[0], 400)
+        status, history = self.req('/listening?attempt_id=' + str(saved['saved']['attempt_id']))
+        self.assertEqual(status, 200, history)
+        self.assertEqual(history['exercise']['questions'], exercise['questions'])
+        self.assertEqual(history['saved']['score'], 3)
+        self.assertEqual(history['exercise']['audio']['url'], saved['exercise']['audio']['url'])
+        self.assertEqual(self.audio_request(history['exercise']['audio']['url'])[2], old_bytes)
+        self.assertEqual(self.audio_request(history['exercise']['audio']['url'], token=self.other_token)[0], 404)
+        with app.conn() as c:
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM listening_attempts')], before)
+        self.assertEqual(old_path.read_bytes(), old_bytes)
+
     def test_every_submission_keeps_immutable_attempt_and_server_score(self):
         exercise = self.exercise()
         first = self.submit(exercise)
@@ -289,8 +345,11 @@ class ListeningTests(unittest.TestCase):
         self.assertEqual(exercise['audio_profile'], item['audio_profile'])
         self.assertEqual(exercise['tts_text'], item['script'])
         self.assertEqual(exercise['audio_profile']['mode'], 'dialogue')
-        for question in exercise['questions']:
-            self.assertEqual(set(question), {'id', 'prompt', 'options'})
+        for question, original in zip(exercise['questions'], item['questions']):
+            expected = {'id', 'prompt', 'options'}
+            if 'prompt_zh' in original:
+                expected |= {'prompt_zh', 'options_zh'}
+            self.assertEqual(set(question), expected)
         payload = self.payload(exercise)
         forged = {'audio_profile': item['audio_profile'], 'voice': 'untrusted-voice',
                   'turns': [], 'tts_text': 'A client cannot change the recording.'}
@@ -372,10 +431,60 @@ class ListeningTests(unittest.TestCase):
 
 
 class ListeningContentTests(unittest.TestCase):
+    def test_live_question_metadata_is_validated_without_loosening_numeric_choices(self):
+        original = json.loads((listening.ROOT / 'listening_bank.json').read_text(encoding='utf-8'))
+        # Exercise the file-reading boundary, rather than bypassing validation with bank().
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root / 'listening_bank.json'
+            path.write_text(json.dumps(original, ensure_ascii=False), encoding='utf-8')
+            with patch.object(listening, 'ROOT', root):
+                self.assertEqual(len(listening.bank()['items']), 20)
+                invalid = [({'prompt_zh': None}), ({'prompt_zh': ' '}), ({'options_zh': 'not a list'}),
+                           ({'options_zh': ['一', '二', '三']}), ({'options_zh': ['一', '二', '三', None]}),
+                           ({'options_zh': ['一', '二', '三', ' ']}), ({'prompt': '请听对话并选择。'}),
+                           ({'prompt': 'Which option is correct?'}), ({'prompt': '1?'}),
+                           ({'options': ['中文', '둘', '셋', '넷']}),
+                           ({'options': ['The bus leaves at 10', '둘', '셋', '넷']})]
+                for change in invalid:
+                    data = copy.deepcopy(original)
+                    item = next(x for x in data['items'] if x['language'] == 'korean')
+                    item['questions'][0].update(change)
+                    path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+                    with self.subTest(change=change), self.assertRaises(RuntimeError):
+                        listening.bank()
+                for missing in ('prompt_zh', 'options_zh'):
+                    data = copy.deepcopy(original)
+                    next(x for x in data['items'] if x['language'] == 'korean')['questions'][0].pop(missing)
+                    path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+                    with self.subTest(missing=missing), self.assertRaises(RuntimeError):
+                        listening.bank()
+        question = {'id': 'numeric', 'prompt': '몇 시입니까?', 'options': ['10:00', '10:30', '11:00', '11:30'],
+                    'correct': 1, 'explanation': '时刻保持题目含义。', 'prompt_zh': '几点？',
+                    'options_zh': ['十点', '十点半', '十一点', '十一点半']}
+        listening.validate_question(question, 'korean')
+        question.pop('prompt_zh')
+        question.pop('options_zh')
+        listening.validate_question(question, 'korean')
+        question['prompt_zh'] = 'Incomplete translation pair'
+        with self.assertRaises(RuntimeError):
+            listening.validate_question(question, 'english')
+
+    def test_question_and_learning_translation_changes_produce_distinct_content_revisions(self):
+        original = next(x for x in listening.bank()['items'] if x['language'] == 'korean')
+        prompt_changed = copy.deepcopy(original)
+        prompt_changed['questions'][0]['prompt'] += ' 다시 고르십시오.'
+        translation_changed = copy.deepcopy(original)
+        translation_changed['questions'][0]['prompt_zh'] += '（学习辅助）'
+        self.assertNotEqual(listening.revision(original), listening.revision(prompt_changed))
+        self.assertNotEqual(listening.revision(original), listening.revision(translation_changed))
+        self.assertEqual(prompt_changed['script'], original['script'])
+        self.assertEqual(prompt_changed['audio_profile'], original['audio_profile'])
+
     def test_versioned_roles_cover_every_stable_exercise_without_reading_labels(self):
         items = listening.bank()['items']
         expected_ids = {f'korean-{level}-listen-{index:02d}'
-                        for level in ('1', '2') for index in range(1, 7)}
+                        for level in ('1', '2') for index in range(1, 8)}
         expected_ids |= {f'english-{level}-listen-{index:02d}'
                          for level in ('B1', 'B2', 'C1') for index in (1, 2)}
         self.assertEqual({x['id'] for x in items}, expected_ids)
@@ -406,7 +515,7 @@ class ListeningContentTests(unittest.TestCase):
                     self.assertEqual((len(speakers), len(turns)), (1, 1))
                     reconstructed = turns[0]['text']
                 self.assertEqual(reconstructed, item['script'])
-        self.assertEqual(counts, {'korean': {'dialogue': 8, 'narration': 4},
+        self.assertEqual(counts, {'korean': {'dialogue': 8, 'narration': 6},
                                   'english': {'dialogue': 3, 'narration': 3}})
 
     def test_audio_profile_rejects_mismatched_roles_text_locale_and_schema(self):
@@ -441,15 +550,15 @@ class ListeningContentTests(unittest.TestCase):
 
     def test_original_bank_has_all_required_types_and_valid_book_points(self):
         data = listening.bank()
-        self.assertEqual(len(data['items']), 18)
-        self.assertEqual(sum(len(x['questions']) for x in data['items']), 54)
+        self.assertEqual(len(data['items']), 20)
+        self.assertEqual(sum(len(x['questions']) for x in data['items']), 60)
         korean = json.loads((listening.ROOT / 'language_korean.json').read_text(encoding='utf-8'))
         ids = {x['id'] for lev in korean['levels'].values() for x in lev['points']}
         for level in ('1', '2'):
             items = [x for x in data['items'] if x['language'] == 'korean' and x['level'] == level]
-            self.assertEqual(len(items), 6)
+            self.assertEqual(len(items), 7)
             self.assertEqual({kind: sum(x['type'] == kind for x in items) for kind in ('短对话', '长对话', '简单文章')},
-                             {'短对话': 2, '长对话': 2, '简单文章': 2})
+                             {'短对话': 2, '长对话': 2, '简单文章': 3})
             for item in items:
                 self.assertTrue(item['knowledge_points'])
                 self.assertTrue(all(p['id'] in ids for p in item['knowledge_points']))
