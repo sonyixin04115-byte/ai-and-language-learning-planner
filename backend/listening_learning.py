@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import re
+import unicodedata
 import wave
 from pathlib import Path
 
@@ -97,13 +98,50 @@ def bank():
     for item in items:
         if item['language'] not in LEVELS or item['level'] not in LEVELS[item['language']]:
             raise RuntimeError('Invalid listening level')
-        if (not item['script'] or not item['translation'] or len(item['questions']) != 3
-                or len({q['id'] for q in item['questions']}) != 3
-                or any(len(q['options']) != 4 or type(q['correct']) is not int
-                       or not 0 <= q['correct'] < 4 for q in item['questions'])):
+        questions = item['questions']
+        if (not item['script'] or not item['translation']
+                or not isinstance(questions, list) or len(questions) != 3
+                or any(not isinstance(q, dict) for q in questions)):
+            raise RuntimeError('Invalid listening question')
+        for question in questions:
+            validate_question(question, item['language'])
+        if len({q['id'] for q in questions}) != 3:
             raise RuntimeError('Invalid listening question')
         validate_audio_profile(item)
     return data
+
+
+def korean_question_text(text, *, prompt=False):
+    """Check current Hangul questions without rejecting numeric answer choices."""
+    if re.search(r'[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]', text):
+        return False
+    if re.search(r'[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]', text):
+        return True
+    return (not prompt and any(char.isnumeric() for char in text)
+            and all(char.isspace() or unicodedata.category(char)[0] in 'NPS'
+                    for char in text))
+
+
+def validate_question(question, language):
+    """Validate the live bank; immutable historical snapshots retain their schema."""
+    if (any(not isinstance(question.get(key), str) or not question[key].strip()
+            for key in ('id', 'prompt', 'explanation'))
+            or not isinstance(question.get('options'), list) or len(question['options']) != 4
+            or any(not isinstance(option, str) or not option.strip()
+                   for option in question['options'])
+            or type(question.get('correct')) is not int or not 0 <= question['correct'] < 4):
+        raise RuntimeError('Invalid listening question')
+    translated = {'prompt_zh', 'options_zh'}.intersection(question)
+    if translated and (translated != {'prompt_zh', 'options_zh'}
+                       or not isinstance(question['prompt_zh'], str) or not question['prompt_zh'].strip()
+                       or not isinstance(question['options_zh'], list) or len(question['options_zh']) != 4
+                       or any(not isinstance(option, str) or not option.strip()
+                              for option in question['options_zh'])):
+        raise RuntimeError('Invalid listening question translation')
+    if language == 'korean' and (not korean_question_text(question['prompt'], prompt=True)
+                                 or any(not korean_question_text(option)
+                                        for option in question['options'])):
+        raise RuntimeError('Current Korean listening questions must use Korean')
 
 
 def revision(item):
@@ -212,7 +250,8 @@ def public(item, c=None):
         'revision': revision(item), 'tts_text': item['script'],
         **({'audio_profile': profile} if profile else {}),
         'audio': audio_descriptor(item, c),
-        'questions': [{key: q[key] for key in ('id', 'prompt', 'options')} for q in item['questions']]}
+        'questions': [{key: q[key] for key in ('id', 'prompt', 'options', 'prompt_zh', 'options_zh')
+                       if key in q} for q in item['questions']]}
 
 
 def summary(row):
