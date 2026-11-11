@@ -609,6 +609,81 @@ class LanguageLearningTests(unittest.TestCase):
         self.assertEqual(status, 200, cleared)
         self.assertEqual(cleared['completed_count'], 0)
 
+    def test_reference_materials_are_visible_but_cannot_change_video_progress(self):
+        fixture = self.video_fixture()
+        reference = {'id': 'ai-reference-notes', 'title': 'Matching course notes',
+                     'section': 'Course materials', 'format': '图文',
+                     'unit_type': 'reading', 'trackable': False,
+                     'url': 'https://example.com/course-notes'}
+        fixture['lessons'].append(reference)
+        self.write('video_courses.json', {'version': 2, 'courses': [fixture]})
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+        video = next(item for item in self.req('/state')[1]['courses']
+                     if item['curriculum_key'] == fixture['key'])
+        cid = video['id']
+        self.assertEqual((video['lesson_count'], video['video_count'], video['trackable_count']),
+                         (3, 2, 2))
+        status, content = self.req(f'/courses/{cid}/lessons')
+        self.assertEqual(status, 200, content)
+        notes = next(item for item in content['lessons'] if item['id'] == reference['id'])
+        self.assertEqual((notes['unit_type'], notes['trackable'], notes['done']),
+                         ('reading', False, False))
+        # Older video rows omit trackable; they must remain checkable by default.
+        self.assertTrue(all(item['trackable'] for item in content['lessons']
+                            if item['unit_type'] == 'video'))
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/ai-video-1', 'PATCH', {'done': True})[0], 200)
+        with app.conn() as c:
+            progress = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+        for done in (True, False):
+            status, result = self.req(f'/courses/{cid}/lessons/{reference["id"]}', 'PATCH', {'done': done})
+            self.assertEqual(status, 404, result)
+        with app.conn() as c:
+            self.assertEqual([tuple(row) for row in c.execute('SELECT * FROM lesson_progress')], progress)
+        reloaded = self.req(f'/courses/{cid}/lessons')[1]
+        self.assertEqual((reloaded['course']['completed_count'], reloaded['course']['trackable_count'],
+                          reloaded['course']['video_count']), (1, 2, 2))
+        self.assertEqual([item['done'] for item in reloaded['lessons']], [True, False, False])
+
+    def test_adding_materials_preserves_completed_video_personal_description_and_archive(self):
+        original = self.video_fixture()
+        with app.conn() as c:
+            learning.seed_courses(c, 1)
+        course = next(item for item in self.req('/state')[1]['courses']
+                      if item['curriculum_key'] == original['key'])
+        cid = course['id']
+        self.assertEqual(self.req(f'/courses/{cid}/lessons/ai-video-1', 'PATCH', {'done': True})[0], 200)
+        self.assertEqual(self.req(f'/courses/{cid}', 'PATCH',
+                                 {'description': 'My own course notes must remain'})[0], 200)
+        self.assertEqual(self.req(f'/courses/{cid}', 'DELETE')[0], 200)
+        with app.conn() as c:
+            saved_course = dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone())
+            saved_progress = [tuple(row) for row in c.execute('SELECT * FROM lesson_progress')]
+        updated = {**original, 'description': 'Factory description with new notes',
+                   'previous_defaults': [{'description': original['description']}],
+                   'lessons': original['lessons'] + [
+                       {'id': 'ai-reference-book', 'title': 'Course textbook', 'section': 'Course materials',
+                        'format': '图文', 'unit_type': 'reading', 'trackable': False,
+                        'url': 'https://example.com/course-textbook'}]}
+        self.write('video_courses.json', {'version': 2, 'courses': [updated]})
+        app.init()
+        app.init()
+        with app.conn() as c:
+            row = dict(c.execute('SELECT * FROM courses WHERE id=?', (cid,)).fetchone())
+            self.assertEqual(row, saved_course)
+            self.assertEqual(row['archived'], 1)
+            self.assertEqual([tuple(item) for item in c.execute('SELECT * FROM lesson_progress')], saved_progress)
+            self.assertEqual(app.completed_lessons(c, 1, row), {'ai-video-1'})
+        published_videos = [item for item in app.course_lessons(row)
+                            if item.get('unit_type') == 'video']
+        self.assertEqual([{key: item[key] for key in original['lessons'][0]}
+                          for item in published_videos], original['lessons'])
+        metadata = app.course_metadata(row)
+        self.assertEqual((metadata['lesson_count'], metadata['video_count'], metadata['trackable_count']),
+                         (3, 2, 2))
+        self.assertNotIn(cid, {item['id'] for item in self.req('/state')[1]['courses']})
+        self.assertEqual(self.req(f'/courses/{cid}/lessons')[0], 404)
+
     def test_video_bundle_adopts_existing_url_without_duplicating_or_overwriting_personal_notes(self):
         fixture = self.video_fixture()
         status, manual = self.req('/courses', 'POST', {
@@ -769,7 +844,9 @@ class LanguageLearningTests(unittest.TestCase):
         current = next(course for course in published['courses']
                        if course['key']=='ai-autodriving-apollo-intro')
         legacy = current['legacy_catalogs'][0]
-        previous = {**current, **current['previous_defaults'][-1], 'lessons':legacy['lessons']}
+        legacy_defaults = next(item for item in current['previous_defaults']
+                               if item.get('title') == legacy['title'] and item.get('url') == legacy['url'])
+        previous = {**current, **legacy_defaults, 'lessons':legacy['lessons']}
         self.write('video_courses.json', {'version':1, 'courses':[previous]})
         with app.conn() as c:
             learning.seed_courses(c, 1)
@@ -802,7 +879,7 @@ class LanguageLearningTests(unittest.TestCase):
                                        (current['key'],)).fetchone()[0], 1)
         status, content = self.req(f'/courses/{cid}/lessons')
         self.assertEqual(status, 200, content)
-        self.assertEqual(len(content['lessons']), 101)
+        self.assertEqual(sum(lesson.get('unit_type') == 'video' for lesson in content['lessons']), 101)
         self.assertFalse(any(lesson['done'] for lesson in content['lessons']))
         self.assertEqual(content['course']['completed_count'], 0)
         self.assertNotIn(old_id, {lesson['id'] for lesson in content['lessons']})
@@ -1001,8 +1078,8 @@ class PublishedLanguageContentTests(unittest.TestCase):
         self.assertEqual(sum(course['category']=='ai' for course in courses), 2)
         self.assertEqual(len({course['key'] for course in courses}), 8)
         units = [lesson for course in courses for lesson in course.get('lessons', [])]
-        self.assertEqual(len(units), 228)
-        self.assertEqual(len({lesson['id'] for lesson in units}), 228)
+        self.assertEqual(sum(lesson.get('trackable', True) is True for lesson in units), 228)
+        self.assertEqual(len({lesson['id'] for lesson in units}), len(units))
         original = [course for course in courses if course['key'] in ('english-system-b2','english-academic-openlearn')]
         original_units = [lesson for course in original for lesson in course['lessons']]
         self.assertEqual(len(original_units), 49)
@@ -1039,32 +1116,42 @@ class PublishedLanguageContentTests(unittest.TestCase):
         self.assertNotIn('ai-intro-xmu-video', {course['key'] for course in courses})
         cv = next(course for course in courses if course['key']=='ai-cv-d2l-selected')
         self.assertEqual(cv['instruction_language'], '中文讲解')
-        self.assertTrue(all(item['unit_type']=='video' and item['url'].startswith('https://www.bilibili.com/video/') for item in cv['lessons']))
-        self.assertEqual(len({item['url'] for item in cv['lessons']}), 13)
+        cv_videos = [item for item in cv['lessons'] if item.get('unit_type') == 'video']
+        self.assertTrue(all(item['url'].startswith('https://www.bilibili.com/video/') for item in cv_videos))
+        self.assertEqual(len({item['url'] for item in cv_videos}), 13)
         apollo = next(course for course in courses if course['key']=='ai-autodriving-apollo-intro')
         self.assertEqual(apollo['url'], 'https://apollo.baidu.com/community/online-course/1')
-        self.assertTrue(all(item['unit_type']=='video' and item['url']=='https://apollo.baidu.com/community/course/outline/1'
-                            for item in apollo['lessons']))
+        apollo_videos = [item for item in apollo['lessons'] if item.get('unit_type') == 'video']
+        self.assertTrue(all(item['url']=='https://apollo.baidu.com/community/course/outline/1'
+                            for item in apollo_videos))
         self.assertEqual(app.course_metadata({'curriculum_key':apollo['key']})['video_count'], 101)
         self.assertEqual(app.course_metadata({'curriculum_key':apollo['key']})['unit_label'], '节')
         self.assertIn('英文原声', apollo['instruction_language'])
         self.assertIn('画面中文字幕', apollo['instruction_language'])
         self.assertIn('抽样', apollo['instruction_language'])
         self.assertEqual(apollo['verified_on'], '2026-11-09')
-        sections = list(dict.fromkeys(lesson['section'] for lesson in apollo['lessons']))
-        self.assertEqual([sum(lesson['section']==section for lesson in apollo['lessons']) for section in sections],
+        sections = list(dict.fromkeys(lesson['section'] for lesson in apollo_videos))
+        self.assertEqual([sum(lesson['section']==section for lesson in apollo_videos) for section in sections],
                          [11, 9, 11, 17, 11, 25, 15, 2])
         self.assertEqual([f'apollo-basics-c{chapter}-{part:02d}'
                           for chapter, count in enumerate((11,9,11,17,11,25,15,2), 1) for part in range(1,count+1)],
-                         [lesson['id'] for lesson in apollo['lessons']])
+                         [lesson['id'] for lesson in apollo_videos])
         legacy = apollo['legacy_catalogs'][0]
         self.assertEqual((legacy['url'], len(legacy['lessons'])),
                          ('https://apollo.baidu.com/community/online-course/105', 17))
         self.assertTrue({lesson['id'] for lesson in legacy['lessons']}.isdisjoint(lesson['id'] for lesson in apollo['lessons']))
-        self.assertEqual(apollo['previous_defaults'][-1]['title'], legacy['title'])
-        self.assertEqual(apollo['previous_defaults'][-1]['url'], legacy['url'])
-        self.assertEqual({course['key']: len(course['lessons']) for course in courses if course['category']=='ai'},
+        self.assertTrue(any(item.get('title') == legacy['title'] and item.get('url') == legacy['url']
+                            for item in apollo['previous_defaults']))
+        self.assertEqual({course['key']: sum(lesson.get('unit_type') == 'video' for lesson in course['lessons'])
+                          for course in courses if course['category']=='ai'},
                          {'ai-cv-d2l-selected':13, 'ai-autodriving-apollo-intro':101})
+        for entry, videos, reference_count in ((cv, 13, 2), (apollo, 101, 1)):
+            references = [item for item in entry['lessons'] if item.get('unit_type') == 'reading']
+            self.assertEqual(len(references), reference_count)
+            self.assertTrue(all(item.get('trackable') is False for item in references))
+            metadata = app.course_metadata({'curriculum_key': entry['key']})
+            self.assertEqual((metadata['lesson_count'], metadata['trackable_count'], metadata['video_count']),
+                             (videos + reference_count, videos, videos))
         for course in courses:
             if course['category']=='korean':
                 self.assertEqual(course['lessons'], [])
