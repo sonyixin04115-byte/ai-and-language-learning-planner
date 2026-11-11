@@ -136,7 +136,8 @@ def external_lessons(course):
               if entry.get('category') == 'english' else {})
     lessons = []
     for item in entry.get('lessons', []):
-        lesson = dict(item, kind='external', size=0, extension='', trackable=True)
+        lesson = dict(item, kind='external', size=0, extension='',
+                      trackable=item.get('trackable', True))
         guide = guides.get(item['id'], {})
         # Explanations supplement the original resource. Its stable identity,
         # URL, title and recorded completion continue to refer to that resource.
