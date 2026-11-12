@@ -61,7 +61,7 @@ class BackendTests(unittest.TestCase):
         video=next(course for course in ai if course['curriculum_key']=='ai-cv-d2l-selected')
         self.assertEqual((video['video_count'],video['trackable_count']),(13,13))
         apollo=next(course for course in ai if course['curriculum_key']=='ai-autodriving-apollo-intro')
-        self.assertEqual(apollo['trackable_count'],17)
+        self.assertEqual((apollo['video_count'],apollo['trackable_count']),(101,101))
         self.assertEqual({course['curriculum_key'] for course in courses if course['category']=='english'},
             {'english-system-b2','english-academic-openlearn','english-zh-ielts-dut','english-zh-ielts-sun-32'})
         english_main=next(course for course in courses if course['curriculum_key']=='english-zh-ielts-sun-32')
