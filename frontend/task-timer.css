@@ -30,3 +30,14 @@
 .task-timer.paused strong,.task-timer.paused small{color:#93672e}
 .task-timer.paused small::before{content:'Ⅱ';display:inline-block;margin-right:.3rem;font-size:.7rem;font-weight:700}
 .task-timer.unavailable { color: var(--muted, #718078); }
+
+/* Timing is optional for everyday to-dos; the estimate remains independent. */
+.task-timing-choice{margin-bottom:6px}
+.task-timing-choice input,.quick-timing-option input{accent-color:var(--green,#22664f)}
+.task-timing-mode-hint{font-size:12px;line-height:1.65;margin-bottom:14px;overflow-wrap:anywhere}
+.add-form{flex-wrap:wrap}
+.quick-timing-option{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;min-height:44px;margin:0;padding:8px 4px;white-space:nowrap}
+.add-form .quick-timing-option input{flex:none;width:18px;height:18px;margin:0}
+.add-form input[name="planned"]{width:154px;flex:0 0 154px}
+.add-form input[name="title"]{flex:1 1 260px;min-width:180px}
+@media(max-width:800px){.add-form input[name="title"]{flex-basis:100%}}
