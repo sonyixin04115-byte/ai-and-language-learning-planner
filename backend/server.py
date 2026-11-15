@@ -50,6 +50,7 @@ def init():
         CREATE TABLE IF NOT EXISTS courses(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, url TEXT DEFAULT '', description TEXT DEFAULT '', source TEXT DEFAULT 'user', archived INTEGER DEFAULT 0, local_key TEXT);
         CREATE TABLE IF NOT EXISTS lesson_progress(user_id INTEGER NOT NULL, course_id INTEGER NOT NULL, lesson_id TEXT NOT NULL, completed_at REAL NOT NULL, PRIMARY KEY(user_id,course_id,lesson_id));
         CREATE TABLE IF NOT EXISTS rest_days(user_id INTEGER NOT NULL, day TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(user_id,day));
+        CREATE TABLE IF NOT EXISTS task_id_state(singleton INTEGER PRIMARY KEY CHECK(singleton=1), high_water INTEGER NOT NULL CHECK(high_water>=0));
         CREATE TABLE IF NOT EXISTS course_defaults(user_id INTEGER PRIMARY KEY);''')
         user_columns={row['name'] for row in c.execute('PRAGMA table_info(users)')}
         if 'avatar' not in user_columns:c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
@@ -60,6 +61,8 @@ def init():
             if column not in columns:c.execute('ALTER TABLE tasks ADD COLUMN '+column+' TEXT')
         if 'pause_history' not in columns:c.execute("ALTER TABLE tasks ADD COLUMN pause_history TEXT NOT NULL DEFAULT '[]'")
         if 'timing_enabled' not in columns:c.execute('ALTER TABLE tasks ADD COLUMN timing_enabled INTEGER NOT NULL DEFAULT 1')
+        c.execute('INSERT OR IGNORE INTO task_id_state(singleton,high_water) VALUES(1,0)')
+        reserve_task_id_floor(c)
         course_columns={row['name'] for row in c.execute('PRAGMA table_info(courses)')}
         if 'local_key' not in course_columns:c.execute('ALTER TABLE courses ADD COLUMN local_key TEXT')
         for user in c.execute('SELECT id FROM users').fetchall(): seed_supplements(c, user['id'])
@@ -71,6 +74,53 @@ def seed_supplements(c, uid):
     c.executemany("INSERT INTO courses(user_id,title,url,description,source) VALUES(?,?,?,?,'supplement')",
                   [(uid, title, url, description) for title, url, description in SUPPLEMENTS])
     c.execute('INSERT INTO course_defaults(user_id) VALUES(?)', (uid,))
+
+def reserve_task_id_floor(c):
+    """Keep deleted task identities retired, including IDs from older databases."""
+    if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
+    c.execute('UPDATE task_id_state SET high_water=MAX(high_water,COALESCE((SELECT MAX(id) FROM tasks),0)) WHERE singleton=1')
+
+def allocate_task_id(c):
+    if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
+    c.execute('UPDATE task_id_state SET high_water=MAX(high_water,COALESCE((SELECT MAX(id) FROM tasks),0))+1 WHERE singleton=1')
+    return c.execute('SELECT high_water FROM task_id_state WHERE singleton=1').fetchone()['high_water']
+
+def task_clear_preview(c, uid):
+    """Read one owner's entire persisted task set without changing it."""
+    tasks=[dict(row) for row in c.execute('SELECT * FROM tasks WHERE user_id=? ORDER BY id',(uid,))]
+    result={'total':len(tasks),'unfinished':0,'completed':0,'archived':0,'running':0}
+    for task in tasks:
+        if task['archived']:
+            result['archived']+=1
+        elif task['done']:
+            result['completed']+=1
+        else:
+            result['unfinished']+=1
+            if task['started_at'] and not task['finished_at']:
+                try:
+                    pauses=read_pause_history(task['pause_history'])
+                    running=not pauses or pauses[-1]['finished_at'] is not None
+                except ValueError:
+                    # A damaged old pause record must not hide an unfinished clock.
+                    running=True
+                result['running']+=int(running)
+    snapshot=json.dumps({'user_id':uid,'tasks':tasks},sort_keys=True,ensure_ascii=False,separators=(',',':'))
+    result['snapshot']=hashlib.sha256(snapshot.encode('utf-8')).hexdigest()
+    return result
+
+def clear_tasks(c, uid, data):
+    if not isinstance(data,dict) or set(data)!={'confirmation','snapshot'} or data.get('confirmation')!='清空全部任务':
+        raise ValueError('请先核对清空范围，并确认“清空全部任务”')
+    snapshot=data['snapshot']
+    if not isinstance(snapshot,str) or len(snapshot)!=64 or any(ch not in '0123456789abcdefABCDEF' for ch in snapshot):
+        raise ValueError('请重新查看待清空的任务范围')
+    if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
+    current=task_clear_preview(c,uid)
+    if not secrets.compare_digest(snapshot,current['snapshot']):
+        return 409,{'error':'任务已发生变化，请重新核对清空范围后确认'}
+    reserve_task_id_floor(c)
+    deleted=c.execute('DELETE FROM tasks WHERE user_id=?',(uid,)).rowcount
+    return 200,{'ok':True,'deleted':deleted}
 
 def jpeg_dimensions(image):
     """Parse a bounded, standalone 8-bit JPEG; never trust client dimensions."""
@@ -420,7 +470,7 @@ def seed(c, uid, start, minutes):
         for d, topic in enumerate(topics):
             day = (start + timedelta(days=w*7+d)).isoformat()
             for title, category, portion in [(topic, '学习', .4), ('动手练习：' + topic, '练习', .4), ('回顾今日知识，写下疑问与总结', '复习', .2)]:
-                c.execute("INSERT INTO tasks(user_id,day,title,category,planned,created_source) VALUES(?,?,?,?,?,'template')", (uid,day,title,category,round(minutes*portion)))
+                c.execute("INSERT INTO tasks(id,user_id,day,title,category,planned,created_source) VALUES(?,?,?,?,?,?,'template')", (allocate_task_id(c),uid,day,title,category,round(minutes*portion)))
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args): pass
@@ -500,6 +550,13 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply(200, {'automatic':False},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 if not u: return self.reply(401, {'error':'请先登录'})
                 uid = u['id']
+                if path == '/api/tasks/clear-preview':
+                    if self.command!='GET':return self.reply(405,{'error':'不支持的操作'})
+                    return self.reply(200,task_clear_preview(c,uid))
+                if path == '/api/tasks' and self.command=='DELETE':
+                    status,result=clear_tasks(c,uid,data)
+                    c.commit()
+                    return self.reply(status,result)
                 if path == '/api/days/rest':
                     if self.command != 'POST':return self.reply(405, {'error':'不支持的操作'})
                     result=set_rest_day(c,uid,data)
@@ -629,7 +686,7 @@ class Handler(BaseHTTPRequestHandler):
                     if not isinstance(done,(bool,int)) or done not in (False,True,0,1): raise ValueError('完成状态应为 true 或 false')
                     timing_enabled=task_timing_enabled(data)
                     started_at,finished_at,actual,pauses=task_timing(data,done=bool(done))
-                    c.execute('INSERT INTO tasks(user_id,day,title,category,planned,note,actual,done,started_at,finished_at,pause_history,timing_enabled) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',(uid,day,title,category,planned,note,actual,int(done),started_at,finished_at,json.dumps(pauses,separators=(',',':')),int(timing_enabled)))
+                    c.execute('INSERT INTO tasks(id,user_id,day,title,category,planned,note,actual,done,started_at,finished_at,pause_history,timing_enabled) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',(allocate_task_id(c),uid,day,title,category,planned,note,actual,int(done),started_at,finished_at,json.dumps(pauses,separators=(',',':')),int(timing_enabled)))
                     return self.reply(201, {'ok':True})
                 if path.startswith('/api/tasks/'):
                     tid = int(path.rsplit('/',1)[1])
@@ -639,7 +696,9 @@ class Handler(BaseHTTPRequestHandler):
                     if self.command in ('PATCH','DELETE'):c.execute('BEGIN IMMEDIATE')
                     if not c.execute('SELECT id FROM tasks WHERE id=? AND user_id=? AND archived=0',(tid,uid)).fetchone(): return self.reply(404, {'error':'任务不存在'})
                     result = {'ok': True}
-                    if self.command == 'DELETE': c.execute('DELETE FROM tasks WHERE id=? AND user_id=?',(tid,uid))
+                    if self.command == 'DELETE':
+                        reserve_task_id_floor(c)
+                        c.execute('DELETE FROM tasks WHERE id=? AND user_id=?',(tid,uid))
                     elif self.command == 'PATCH':
                         if not isinstance(data,dict):raise ValueError('任务数据需为对象')
                         old = c.execute('SELECT * FROM tasks WHERE id=? AND user_id=?',(tid,uid)).fetchone()
