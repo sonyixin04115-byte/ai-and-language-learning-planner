@@ -85,9 +85,7 @@ def allocate_task_id(c):
     c.execute('UPDATE task_id_state SET high_water=MAX(high_water,COALESCE((SELECT MAX(id) FROM tasks),0))+1 WHERE singleton=1')
     return c.execute('SELECT high_water FROM task_id_state WHERE singleton=1').fetchone()['high_water']
 
-def task_clear_preview(c, uid):
-    """Read one owner's entire persisted task set without changing it."""
-    tasks=[dict(row) for row in c.execute('SELECT * FROM tasks WHERE user_id=? ORDER BY id',(uid,))]
+def task_clear_counts(tasks):
     result={'total':len(tasks),'unfinished':0,'completed':0,'archived':0,'running':0}
     for task in tasks:
         if task['archived']:
@@ -104,6 +102,12 @@ def task_clear_preview(c, uid):
                     # A damaged old pause record must not hide an unfinished clock.
                     running=True
                 result['running']+=int(running)
+    return result
+
+def task_clear_preview(c, uid):
+    """Read one owner's entire persisted task set without changing it."""
+    tasks=[dict(row) for row in c.execute('SELECT * FROM tasks WHERE user_id=? ORDER BY id',(uid,))]
+    result=task_clear_counts(tasks)
     snapshot=json.dumps({'user_id':uid,'tasks':tasks},sort_keys=True,ensure_ascii=False,separators=(',',':'))
     result['snapshot']=hashlib.sha256(snapshot.encode('utf-8')).hexdigest()
     return result
@@ -121,6 +125,44 @@ def clear_tasks(c, uid, data):
     reserve_task_id_floor(c)
     deleted=c.execute('DELETE FROM tasks WHERE user_id=?',(uid,)).rowcount
     return 200,{'ok':True,'deleted':deleted}
+
+STUDY_RECORD_TABLES={
+    'tasks':'id',
+    'lesson_progress':'course_id,lesson_id',
+    'rest_days':'day',
+    'language_answers':'language,level,day,exercise_id,practice_direction',
+    'language_daily_sets':'language,level,day,direction',
+    'listening_attempts':'id',
+    'listening_reveals':'exercise_id,revision',
+}
+
+def study_clear_preview(c, uid):
+    """Snapshot only study records; account, catalogue and preferences stay."""
+    if not c.in_transaction:c.execute('BEGIN')
+    records={table:[dict(row) for row in c.execute(
+        'SELECT * FROM '+table+' WHERE user_id=? ORDER BY '+order,(uid,))]
+        for table,order in STUDY_RECORD_TABLES.items()}
+    counts={table:len(rows) for table,rows in records.items()}
+    snapshot=json.dumps({'user_id':uid,'study_records':records},sort_keys=True,
+                        ensure_ascii=False,separators=(',',':'))
+    return {'total':sum(counts.values()),'tasks':task_clear_counts(records['tasks']),
+            **{table:count for table,count in counts.items() if table!='tasks'},
+            'snapshot':hashlib.sha256(snapshot.encode('utf-8')).hexdigest()}
+
+def clear_study(c, uid, data):
+    if not isinstance(data,dict) or set(data)!={'confirmation','snapshot'} or data.get('confirmation')!='清空全站学习记录':
+        raise ValueError('请先核对清空范围，并确认“清空全站学习记录”')
+    snapshot=data['snapshot']
+    if not isinstance(snapshot,str) or len(snapshot)!=64 or any(ch not in '0123456789abcdefABCDEF' for ch in snapshot):
+        raise ValueError('请重新查看待清空的学习记录范围')
+    if not c.in_transaction:c.execute('BEGIN IMMEDIATE')
+    current=study_clear_preview(c,uid)
+    if not secrets.compare_digest(snapshot,current['snapshot']):
+        return 409,{'error':'学习记录已发生变化，请重新核对清空范围后确认'}
+    reserve_task_id_floor(c)
+    deleted={table:c.execute('DELETE FROM '+table+' WHERE user_id=?',(uid,)).rowcount
+             for table in STUDY_RECORD_TABLES}
+    return 200,{'ok':True,'deleted':sum(deleted.values()),'deleted_by_table':deleted}
 
 def jpeg_dimensions(image):
     """Parse a bounded, standalone 8-bit JPEG; never trust client dimensions."""
@@ -550,6 +592,16 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply(200, {'automatic':False},'session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 if not u: return self.reply(401, {'error':'请先登录'})
                 uid = u['id']
+                if path == '/api/study/clear-preview':
+                    if self.command!='GET':return self.reply(405,{'error':'不支持的操作'})
+                    result=study_clear_preview(c,uid)
+                    c.commit()
+                    return self.reply(200,result)
+                if path == '/api/study':
+                    if self.command!='DELETE':return self.reply(405,{'error':'不支持的操作'})
+                    status,result=clear_study(c,uid,data)
+                    c.commit()
+                    return self.reply(status,result)
                 if path == '/api/tasks/clear-preview':
                     if self.command!='GET':return self.reply(405,{'error':'不支持的操作'})
                     return self.reply(200,task_clear_preview(c,uid))
