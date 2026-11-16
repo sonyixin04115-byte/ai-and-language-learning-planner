@@ -44,12 +44,12 @@
 .hero-task-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
 .hero-task-actions button{white-space:nowrap}
 .task-clear-entry{font-size:13px}
-#clearTasksDialog{width:600px}
+#clearStudyDialog{width:640px}
 .task-clear-warning{padding:14px;background:#fff3ee;border:1px solid #eed7cd;border-radius:9px;color:#873e30;font-size:14px;overflow-wrap:anywhere}
-.task-clear-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
-.task-clear-counts>div{padding:10px;border:1px solid var(--line);border-radius:8px}
+.task-clear-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.task-clear-counts>div{padding:8px;border:1px solid var(--line);border-radius:8px}
 .task-clear-counts dt{font-size:12px;color:var(--muted)}
-.task-clear-counts dd{margin:2px 0 0;font-size:23px;font-variant-numeric:tabular-nums}
+.task-clear-counts dd{margin:2px 0 0;font-size:21px;font-variant-numeric:tabular-nums}
 .task-clear-status{font-size:13px;overflow-wrap:anywhere}
 .task-clear-confirm{background:#a33e30;border-color:#a33e30;color:#fff}
 .task-clear-actions{flex-wrap:wrap}
